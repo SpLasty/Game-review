@@ -115,15 +115,18 @@ def _plots(
     comparison: pd.DataFrame,
 ) -> None:
     os.environ.setdefault("MPLCONFIGDIR", str(config.root / ".matplotlib"))
-    import matplotlib
+    from matplotlib.backends.backend_agg import FigureCanvasAgg
+    from matplotlib.figure import Figure
 
-    matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
+    def figure(width: int, height: int):
+        fig = Figure(figsize=(width, height))
+        FigureCanvasAgg(fig)
+        return fig, fig.subplots()
 
     plots = config.reports_dir / "figures"
     plots.mkdir(exist_ok=True)
     ordered = per_game.sort_values("reviews")
-    fig, ax = plt.subplots(figsize=(10, 9))
+    fig, ax = figure(10, 9)
     ax.barh(ordered["game"], ordered["reviews"], color="#247B8A")
     ax.set(
         xlabel="Collected reviews (not total Steam population)",
@@ -131,8 +134,7 @@ def _plots(
     )
     fig.tight_layout()
     fig.savefig(plots / "reviews_by_game.png", dpi=150)
-    plt.close(fig)
-    fig, ax = plt.subplots(figsize=(9, 4))
+    fig, ax = figure(9, 4)
     ax.bar(lengths["word_bin"].astype(str), lengths["reviews"], color="#247B8A")
     ax.set(
         xlabel="Unicode word runs",
@@ -141,8 +143,7 @@ def _plots(
     )
     fig.tight_layout()
     fig.savefig(plots / "review_lengths.png", dpi=150)
-    plt.close(fig)
-    fig, ax = plt.subplots(figsize=(9, 4))
+    fig, ax = figure(9, 4)
     ax.bar(comparison["dataset"], comparison["negative_share"] * 100, color=["#247B8A", "#DA9155"])
     ax.set(
         ylabel="Negative recommendation (%)",
@@ -150,12 +151,11 @@ def _plots(
     )
     fig.tight_layout()
     fig.savefig(plots / "recommendation_comparison.png", dpi=150)
-    plt.close(fig)
     heatmap = daily.pivot(index="game", columns="date_utc", values="reviews").fillna(0)
     # Include zero-observation dates; the display must not compress missing calendar days.
     dates = pd.date_range(daily["date_utc"].min(), daily["date_utc"].max(), freq="D", tz="UTC")
     heatmap = heatmap.reindex(columns=dates, fill_value=0)
-    fig, ax = plt.subplots(figsize=(12, 8))
+    fig, ax = figure(12, 8)
     image = ax.imshow(
         heatmap.to_numpy(dtype=float, na_value=0),
         aspect="auto",
@@ -171,7 +171,6 @@ def _plots(
     fig.colorbar(image, ax=ax, label="Collected reviews")
     fig.tight_layout()
     fig.savefig(plots / "coverage_by_game_day.png", dpi=150)
-    plt.close(fig)
 
 
 def profile(config: DataConfig) -> dict:
