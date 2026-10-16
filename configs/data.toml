@@ -1,0 +1,17 @@
+[project]
+# Paths below are resolved from this root, relative to this configuration file.
+root = ".."
+
+[paths]
+source_dir = "data/processed/steam_30_games"
+interim_dir = "data/interim/steam_30_games"
+reports_dir = "reports/data_exploration"
+
+[files]
+reviews = "all_english_reviews.csv"
+balanced = "balanced_reviews.csv"
+announcements = "developer_announcements.csv"
+
+[preprocessing]
+minimum_words = 10
+language = "english"
