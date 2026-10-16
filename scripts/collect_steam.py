@@ -265,7 +265,8 @@ def parse_args(argv=None):
     parser.add_argument('--max-rate-limit-retries',type=int,default=0,help='0 retries 429 indefinitely; nonzero stops safely after this many 429s')
     args=parser.parse_args(argv)
     if min(args.min_words,args.reviews_per_game,args.max_raw_per_game,args.news_per_game,args.rate_limit_wait,args.max_rate_limit_wait)<=0 or args.request_interval<0 or args.max_rate_limit_retries<0:parser.error('Targets/waits positive; interval and retry count nonnegative')
-    if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]*',args.snapshot):parser.error('Snapshot must be a simple folder name, without directory traversal or path separators')
+    if not args.snapshot or any(not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]*',part) or part in {'.','..'} for part in args.snapshot.split('/')):
+        parser.error('Snapshot must be a safe relative path without directory traversal')
     args.games=dict(GAMES)
     if args.games_file:
         try:

@@ -14,6 +14,7 @@ ASK mode: never. Effort: lite. Assurance: draft.
 | A-008 | Generated artifacts? | Aggregate reports under `reports/data_exploration/`; new Parquet under `data/interim/steam_30_games/`; deterministic ordering and a manifest. Never overwrite source CSVs or write outputs inside their directory. | interface | default |
 | A-009 | Exploration notebook behavior? | Notebooks call tested package functions, with a documented repository-root cell; unexecuted tracked notebooks carry no copied review outputs. | interface | default |
 | A-010 | Existing collector default rejects its own path? | Accept safe relative snapshot paths including the current `raw/steam_30_games` default; still reject absolute paths, traversal components and backslashes. This preserves existing archive paths. | interface | default |
+| A-011 | What counts as a word? | Use Python Unicode `re` word runs, matching the collector, for both validation and eligibility. Do not use the Arrow-backed string-regex engine, which differs for Unicode text. | semantic | default |
 
 ## Notes
 
