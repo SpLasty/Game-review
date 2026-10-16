@@ -1,0 +1,15 @@
+.local/
+.qodo/
+__pycache__/
+**/__pycache__/
+# Keep resumable collection files on the collection computer; publish processed CSVs instead.
+data/raw/steam_30_games/*/
+data/*/.collector.lock
+data/**/.collector.lock
+
+# Optional tools not needed for the main collection workflow.
+/scripts/build_pipeline_document.py
+/scripts/build_steam_report.py
+/scripts/check_steam_explorer.cjs
+/scripts/steam_explorer.template.html
+/scripts/validate_expanded.py
