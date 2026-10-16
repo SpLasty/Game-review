@@ -1,0 +1,166 @@
+{
+  "canvas": {
+    "width": 1040,
+    "height": 615
+  },
+  "nodes": [
+    {
+      "id": "patch",
+      "label": "Patch post\nTitle + headings + branch",
+      "x": 140,
+      "y": 90,
+      "width": 230,
+      "height": 78,
+      "fill": "#EAF3F8"
+    },
+    {
+      "id": "claims",
+      "label": "Atomic change claims\nExact spans + release scope",
+      "x": 450,
+      "y": 90,
+      "width": 230,
+      "height": 78,
+      "fill": "#EAF3F8"
+    },
+    {
+      "id": "window",
+      "label": "Eligible review window\nCoverage + edit handling",
+      "x": 850,
+      "y": 90,
+      "width": 260,
+      "height": 78,
+      "fill": "#EAF3F8"
+    },
+    {
+      "id": "retrieval",
+      "label": "Hybrid retrieval\nBM25 + MiniLM; game filter",
+      "x": 140,
+      "y": 290,
+      "width": 230,
+      "height": 78,
+      "fill": "#EAF3F8"
+    },
+    {
+      "id": "link",
+      "label": "Link + evidence checks\nSame change? Ambiguous?",
+      "x": 450,
+      "y": 290,
+      "width": 230,
+      "height": 78,
+      "fill": "#EAF3F8"
+    },
+    {
+      "id": "polarity",
+      "label": "Change-targeted polarity\nPositive / negative / mixed",
+      "x": 850,
+      "y": 290,
+      "width": 260,
+      "height": 78,
+      "fill": "#EAF3F8"
+    },
+    {
+      "id": "status",
+      "label": "Developer fix status\nProposal ladder + scope",
+      "x": 140,
+      "y": 510,
+      "width": 230,
+      "height": 78,
+      "fill": "#FFF3DC"
+    },
+    {
+      "id": "aggregate",
+      "label": "Aggregate unique reviews\nCounts / coverage / uncertainty",
+      "x": 450,
+      "y": 510,
+      "width": 230,
+      "height": 78,
+      "fill": "#FFF3DC"
+    },
+    {
+      "id": "report",
+      "label": "Cited patch report\nLiked / disliked / insufficient",
+      "x": 850,
+      "y": 510,
+      "width": 260,
+      "height": 78,
+      "fill": "#FFF3DC"
+    }
+  ],
+  "edges": [
+    {
+      "from": "patch",
+      "to": "claims",
+      "label": ""
+    },
+    {
+      "from": "claims",
+      "to": "window",
+      "label": "release time"
+    },
+    {
+      "from": "claims",
+      "to": "link",
+      "label": ""
+    },
+    {
+      "from": "window",
+      "to": "polarity",
+      "label": ""
+    },
+    {
+      "from": "retrieval",
+      "to": "link",
+      "label": ""
+    },
+    {
+      "from": "link",
+      "to": "polarity",
+      "label": ""
+    },
+    {
+      "from": "patch",
+      "to": "retrieval",
+      "label": ""
+    },
+    {
+      "from": "retrieval",
+      "to": "status",
+      "label": ""
+    },
+    {
+      "from": "polarity",
+      "to": "aggregate",
+      "label": ""
+    },
+    {
+      "from": "status",
+      "to": "aggregate",
+      "label": ""
+    },
+    {
+      "from": "link",
+      "to": "aggregate",
+      "label": ""
+    },
+    {
+      "from": "aggregate",
+      "to": "report",
+      "label": ""
+    }
+  ],
+  "labels": [
+    {
+      "x": 520,
+      "y": 20,
+      "text": "TWO QUESTIONS: what players say, and what developers announce",
+      "font_size": 15,
+      "weight": "bold"
+    },
+    {
+      "x": 520,
+      "y": 590,
+      "text": "Retrieval searches eligible review spans for each claim; fix-check mode reverses retrieval to announcement passages.",
+      "font_size": 11
+    }
+  ]
+}

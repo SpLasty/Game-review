@@ -13,3 +13,5 @@ data/**/.collector.lock
 /scripts/check_steam_explorer.cjs
 /scripts/steam_explorer.template.html
 /scripts/validate_expanded.py
+
+.env

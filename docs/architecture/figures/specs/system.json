@@ -1,0 +1,184 @@
+{
+  "canvas": {
+    "width": 1040,
+    "height": 630
+  },
+  "nodes": [
+    {
+      "id": "steam",
+      "label": "Steam APIs\nCatalog / reviews / news",
+      "x": 125,
+      "y": 95,
+      "width": 205,
+      "height": 78,
+      "fill": "#EAF3F8"
+    },
+    {
+      "id": "ingest",
+      "label": "Connector + worker\nRate budget / checkpoints",
+      "x": 390,
+      "y": 95,
+      "width": 205,
+      "height": 78,
+      "fill": "#EAF3F8"
+    },
+    {
+      "id": "raw",
+      "label": "Source archive\nSanitized, versioned JSON",
+      "x": 650,
+      "y": 95,
+      "width": 205,
+      "height": 78,
+      "fill": "#EAF3F8"
+    },
+    {
+      "id": "parse",
+      "label": "Normalize + parse\nReview spans / patch claims",
+      "x": 910,
+      "y": 95,
+      "width": 205,
+      "height": 78,
+      "fill": "#EAF3F8"
+    },
+    {
+      "id": "models",
+      "label": "Inference pipeline\nRetrieve / link / polarity / status",
+      "x": 910,
+      "y": 300,
+      "width": 205,
+      "height": 78,
+      "fill": "#EAF3F8"
+    },
+    {
+      "id": "db",
+      "label": "Postgres + pgvector\nEvidence + report snapshots",
+      "x": 650,
+      "y": 300,
+      "width": 205,
+      "height": 78,
+      "fill": "#EAF3F8"
+    },
+    {
+      "id": "api",
+      "label": "FastAPI\nJobs + cached report reads",
+      "x": 390,
+      "y": 300,
+      "width": 205,
+      "height": 78,
+      "fill": "#EAF3F8"
+    },
+    {
+      "id": "ui",
+      "label": "Streamlit\nGame / patch / evidence",
+      "x": 125,
+      "y": 300,
+      "width": 205,
+      "height": 78,
+      "fill": "#EAF3F8"
+    },
+    {
+      "id": "dvc",
+      "label": "DVC snapshots\nOffline training inputs",
+      "x": 260,
+      "y": 500,
+      "width": 205,
+      "height": 78,
+      "fill": "#FFF3DC"
+    },
+    {
+      "id": "mlflow",
+      "label": "Training + evaluation\nMLflow runs and registry",
+      "x": 555,
+      "y": 500,
+      "width": 205,
+      "height": 78,
+      "fill": "#FFF3DC"
+    },
+    {
+      "id": "release",
+      "label": "Release manifest\nPinned model bundle",
+      "x": 850,
+      "y": 500,
+      "width": 205,
+      "height": 78,
+      "fill": "#FFF3DC"
+    }
+  ],
+  "edges": [
+    {
+      "from": "steam",
+      "to": "ingest",
+      "label": ""
+    },
+    {
+      "from": "ingest",
+      "to": "raw",
+      "label": ""
+    },
+    {
+      "from": "raw",
+      "to": "parse",
+      "label": ""
+    },
+    {
+      "from": "parse",
+      "to": "models",
+      "label": ""
+    },
+    {
+      "from": "models",
+      "to": "db",
+      "label": ""
+    },
+    {
+      "from": "db",
+      "to": "api",
+      "label": ""
+    },
+    {
+      "from": "api",
+      "to": "ui",
+      "label": ""
+    },
+    {
+      "from": "api",
+      "to": "ingest",
+      "label": "enqueue",
+      "label_dx": 35,
+      "label_dy": 0
+    },
+    {
+      "from": "dvc",
+      "to": "mlflow",
+      "label": ""
+    },
+    {
+      "from": "mlflow",
+      "to": "release",
+      "label": ""
+    },
+    {
+      "from": "release",
+      "to": "models",
+      "label": "load",
+      "style": "dashed",
+      "label_dx": 40,
+      "label_dy": 0
+    }
+  ],
+  "labels": [
+    {
+      "x": 520,
+      "y": 20,
+      "text": "RUNTIME: one codebase, API and durable worker processes",
+      "font_size": 15,
+      "weight": "bold"
+    },
+    {
+      "x": 520,
+      "y": 590,
+      "text": "OFFLINE LIFECYCLE: snapshots are cut from the source archive; serving never trains models",
+      "font_size": 12
+    }
+  ]
+}

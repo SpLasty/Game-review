@@ -1,0 +1,148 @@
+{
+  "canvas": {
+    "width": 1040,
+    "height": 580
+  },
+  "nodes": [
+    {
+      "id": "snapshot",
+      "label": "Approved data snapshot\nDVC + split manifest",
+      "x": 130,
+      "y": 100,
+      "width": 225,
+      "height": 78,
+      "fill": "#EAF3F8"
+    },
+    {
+      "id": "train",
+      "label": "Reproduce + train\nLocked environment",
+      "x": 390,
+      "y": 100,
+      "width": 215,
+      "height": 78,
+      "fill": "#EAF3F8"
+    },
+    {
+      "id": "eval",
+      "label": "Evaluate candidate\nQuality + latency gates",
+      "x": 650,
+      "y": 100,
+      "width": 215,
+      "height": 78,
+      "fill": "#EAF3F8"
+    },
+    {
+      "id": "registry",
+      "label": "MLflow registry\nImmutable model versions",
+      "x": 910,
+      "y": 100,
+      "width": 220,
+      "height": 78,
+      "fill": "#EAF3F8"
+    },
+    {
+      "id": "code",
+      "label": "Pull request\nTests / schema / security",
+      "x": 130,
+      "y": 310,
+      "width": 205,
+      "height": 78,
+      "fill": "#EAF3F8"
+    },
+    {
+      "id": "image",
+      "label": "Build once\nImage digest + SBOM",
+      "x": 390,
+      "y": 310,
+      "width": 205,
+      "height": 78,
+      "fill": "#EAF3F8"
+    },
+    {
+      "id": "stage",
+      "label": "Staging release\nPinned bundle + smoke tests",
+      "x": 650,
+      "y": 310,
+      "width": 205,
+      "height": 78,
+      "fill": "#EAF3F8"
+    },
+    {
+      "id": "prod",
+      "label": "Production rollout\nHealth checks + rollback",
+      "x": 910,
+      "y": 310,
+      "width": 205,
+      "height": 78,
+      "fill": "#EAF3F8"
+    },
+    {
+      "id": "monitor",
+      "label": "Operations + human labels\nDrift triage; proposed retraining",
+      "x": 520,
+      "y": 475,
+      "width": 390,
+      "height": 65,
+      "fill": "#FFF3DC"
+    }
+  ],
+  "edges": [
+    {
+      "from": "snapshot",
+      "to": "train",
+      "label": ""
+    },
+    {
+      "from": "train",
+      "to": "eval",
+      "label": ""
+    },
+    {
+      "from": "eval",
+      "to": "registry",
+      "label": ""
+    },
+    {
+      "from": "code",
+      "to": "image",
+      "label": ""
+    },
+    {
+      "from": "image",
+      "to": "stage",
+      "label": ""
+    },
+    {
+      "from": "stage",
+      "to": "prod",
+      "label": ""
+    },
+    {
+      "from": "registry",
+      "to": "stage",
+      "label": "release manifest",
+      "label_dx": 40,
+      "label_dy": 0
+    },
+    {
+      "from": "prod",
+      "to": "monitor",
+      "label": "",
+      "style": "dashed"
+    }
+  ],
+  "labels": [
+    {
+      "x": 520,
+      "y": 20,
+      "text": "CI/CD RELEASES SOFTWARE; TRAINING PROPOSES MODELS",
+      "font_size": 15,
+      "weight": "bold"
+    },
+    {
+      "x": 520,
+      "y": 550,
+      "text": "Feedback is reviewed before a new snapshot; drift never promotes a model automatically."
+    }
+  ]
+}

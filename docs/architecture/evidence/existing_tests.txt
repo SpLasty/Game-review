@@ -1,0 +1,200 @@
+test_caps_each_game_without_forcing_sentiment_balance (test_balanced_export.BalancedExportTests.test_caps_each_game_without_forcing_sentiment_balance) ... ok
+test_shortfalls_do_not_duplicate_or_invent_rows (test_balanced_export.BalancedExportTests.test_shortfalls_do_not_duplicate_or_invent_rows) ... ok
+test_429_honors_header_and_retries_same_url (test_collect_steam.RecoveryTests.test_429_honors_header_and_retries_same_url) ... HTTP 429 on example.com; saved cooldown; retrying SAME page in 75s.
+Cooldown for example.com: 75s remaining; resumes at 1970-01-01T00:17:55+00:00
+Cooldown for example.com: 45s remaining; resumes at 1970-01-01T00:17:55+00:00
+Cooldown for example.com: 15s remaining; resumes at 1970-01-01T00:17:55+00:00
+ok
+test_crash_after_row_write_replays_without_duplicates (test_collect_steam.RecoveryTests.test_crash_after_row_write_replays_without_duplicates) ... usage: python -m unittest [-h] [--snapshot SNAPSHOT]
+                          [--review-api {auto,modern,legacy}]
+                          [--reviews-per-game REVIEWS_PER_GAME]
+                          [--min-words MIN_WORDS]
+                          [--max-raw-per-game MAX_RAW_PER_GAME]
+                          [--news-per-game NEWS_PER_GAME]
+                          [--news-since NEWS_SINCE] [--games-file GAMES_FILE]
+                          [--appids APPIDS [APPIDS ...]]
+                          [--request-interval REQUEST_INTERVAL]
+                          [--rate-limit-wait RATE_LIMIT_WAIT]
+                          [--max-rate-limit-wait MAX_RATE_LIMIT_WAIT]
+                          [--max-rate-limit-retries MAX_RATE_LIMIT_RETRIES]
+python -m unittest: error: Snapshot must be a simple folder name, without directory traversal or path separators
+ERROR
+test_custom_game_scope_and_subset_validation (test_collect_steam.RecoveryTests.test_custom_game_scope_and_subset_validation) ... usage: python -m unittest [-h] [--snapshot SNAPSHOT]
+                          [--review-api {auto,modern,legacy}]
+                          [--reviews-per-game REVIEWS_PER_GAME]
+                          [--min-words MIN_WORDS]
+                          [--max-raw-per-game MAX_RAW_PER_GAME]
+                          [--news-per-game NEWS_PER_GAME]
+                          [--news-since NEWS_SINCE] [--games-file GAMES_FILE]
+                          [--appids APPIDS [APPIDS ...]]
+                          [--request-interval REQUEST_INTERVAL]
+                          [--rate-limit-wait RATE_LIMIT_WAIT]
+                          [--max-rate-limit-wait MAX_RATE_LIMIT_WAIT]
+                          [--max-rate-limit-retries MAX_RATE_LIMIT_RETRIES]
+python -m unittest: error: Snapshot must be a simple folder name, without directory traversal or path separators
+ERROR
+test_empty_page_marks_exhaustion (test_collect_steam.RecoveryTests.test_empty_page_marks_exhaustion) ... usage: python -m unittest [-h] [--snapshot SNAPSHOT]
+                          [--review-api {auto,modern,legacy}]
+                          [--reviews-per-game REVIEWS_PER_GAME]
+                          [--min-words MIN_WORDS]
+                          [--max-raw-per-game MAX_RAW_PER_GAME]
+                          [--news-per-game NEWS_PER_GAME]
+                          [--news-since NEWS_SINCE] [--games-file GAMES_FILE]
+                          [--appids APPIDS [APPIDS ...]]
+                          [--request-interval REQUEST_INTERVAL]
+                          [--rate-limit-wait RATE_LIMIT_WAIT]
+                          [--max-rate-limit-wait MAX_RATE_LIMIT_WAIT]
+                          [--max-rate-limit-retries MAX_RATE_LIMIT_RETRIES]
+python -m unittest: error: Snapshot must be a simple folder name, without directory traversal or path separators
+ERROR
+test_fatal_403_is_not_retried (test_collect_steam.RecoveryTests.test_fatal_403_is_not_retried) ... ok
+test_filter_counts_target_while_preserving_short_rows (test_collect_steam.RecoveryTests.test_filter_counts_target_while_preserving_short_rows) ... usage: python -m unittest [-h] [--snapshot SNAPSHOT]
+                          [--review-api {auto,modern,legacy}]
+                          [--reviews-per-game REVIEWS_PER_GAME]
+                          [--min-words MIN_WORDS]
+                          [--max-raw-per-game MAX_RAW_PER_GAME]
+                          [--news-per-game NEWS_PER_GAME]
+                          [--news-since NEWS_SINCE] [--games-file GAMES_FILE]
+                          [--appids APPIDS [APPIDS ...]]
+                          [--request-interval REQUEST_INTERVAL]
+                          [--rate-limit-wait RATE_LIMIT_WAIT]
+                          [--max-rate-limit-wait MAX_RATE_LIMIT_WAIT]
+                          [--max-rate-limit-retries MAX_RATE_LIMIT_RETRIES]
+python -m unittest: error: Snapshot must be a simple folder name, without directory traversal or path separators
+ERROR
+test_http_date_and_invalid_retry_after (test_collect_steam.RecoveryTests.test_http_date_and_invalid_retry_after) ... ok
+test_language_mismatch_is_saved_but_not_eligible (test_collect_steam.RecoveryTests.test_language_mismatch_is_saved_but_not_eligible) ... ok
+test_missing_header_exponential_backoff (test_collect_steam.RecoveryTests.test_missing_header_exponential_backoff) ... HTTP 429 on example.com; saved cooldown; retrying SAME page in 60s.
+Cooldown for example.com: 60s remaining; resumes at 1970-01-01T00:17:40+00:00
+Cooldown for example.com: 30s remaining; resumes at 1970-01-01T00:17:40+00:00
+HTTP 429 on example.com; saved cooldown; retrying SAME page in 120s.
+Cooldown for example.com: 120s remaining; resumes at 1970-01-01T00:19:40+00:00
+Cooldown for example.com: 90s remaining; resumes at 1970-01-01T00:19:40+00:00
+Cooldown for example.com: 60s remaining; resumes at 1970-01-01T00:19:40+00:00
+Cooldown for example.com: 30s remaining; resumes at 1970-01-01T00:19:40+00:00
+ok
+test_rerun_larger_target_continues_saved_cursor (test_collect_steam.RecoveryTests.test_rerun_larger_target_continues_saved_cursor) ... usage: python -m unittest [-h] [--snapshot SNAPSHOT]
+                          [--review-api {auto,modern,legacy}]
+                          [--reviews-per-game REVIEWS_PER_GAME]
+                          [--min-words MIN_WORDS]
+                          [--max-raw-per-game MAX_RAW_PER_GAME]
+                          [--news-per-game NEWS_PER_GAME]
+                          [--news-since NEWS_SINCE] [--games-file GAMES_FILE]
+                          [--appids APPIDS [APPIDS ...]]
+                          [--request-interval REQUEST_INTERVAL]
+                          [--rate-limit-wait RATE_LIMIT_WAIT]
+                          [--max-rate-limit-wait MAX_RATE_LIMIT_WAIT]
+                          [--max-rate-limit-retries MAX_RATE_LIMIT_RETRIES]
+python -m unittest: error: Snapshot must be a simple folder name, without directory traversal or path separators
+ERROR
+test_restart_respects_persisted_cooldown (test_collect_steam.RecoveryTests.test_restart_respects_persisted_cooldown) ... HTTP 429 on example.com; saved cooldown; retrying SAME page in 100s.
+Cooldown for example.com: 100s remaining; resumes at 1970-01-01T00:18:20+00:00
+Cooldown for example.com: 70s remaining; resumes at 1970-01-01T00:18:20+00:00
+Cooldown for example.com: 40s remaining; resumes at 1970-01-01T00:18:20+00:00
+Cooldown for example.com: 10s remaining; resumes at 1970-01-01T00:18:20+00:00
+ok
+test_snapshot_lock_blocks_second_writer (test_collect_steam.RecoveryTests.test_snapshot_lock_blocks_second_writer) ... ok
+test_truncated_final_record_recovery_and_interior_error (test_collect_steam.RecoveryTests.test_truncated_final_record_recovery_and_interior_error) ... Recovered interrupted final row
+ok
+
+======================================================================
+ERROR: test_crash_after_row_write_replays_without_duplicates (test_collect_steam.RecoveryTests.test_crash_after_row_write_replays_without_duplicates)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/ict317/master's/ENSF 621/Project/Game-review/tests/test_collect_steam.py", line 76, in test_crash_after_row_write_replays_without_duplicates
+    folder,args=self.fixture(target=2);path=folder/'reviews.jsonl'
+                ~~~~~~~~~~~~^^^^^^^^^^
+  File "/home/ict317/master's/ENSF 621/Project/Game-review/tests/test_collect_steam.py", line 31, in fixture
+    args=c.parse_args(['--review-api','legacy','--min-words',str(minimum),'--reviews-per-game',str(target)])
+  File "/home/ict317/master's/ENSF 621/Project/Game-review/scripts/collect_steam.py", line 268, in parse_args
+    if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]*',args.snapshot):parser.error('Snapshot must be a simple folder name, without directory traversal or path separators')
+                                                                     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ict317/miniconda3/lib/python3.13/argparse.py", line 2686, in error
+    self.exit(2, _('%(prog)s: error: %(message)s\n') % args)
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ict317/miniconda3/lib/python3.13/argparse.py", line 2673, in exit
+    _sys.exit(status)
+    ~~~~~~~~~^^^^^^^^
+SystemExit: 2
+
+======================================================================
+ERROR: test_custom_game_scope_and_subset_validation (test_collect_steam.RecoveryTests.test_custom_game_scope_and_subset_validation)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/ict317/master's/ENSF 621/Project/Game-review/tests/test_collect_steam.py", line 132, in test_custom_game_scope_and_subset_validation
+    args=c.parse_args(['--games-file',str(path),'--appids','999'])
+  File "/home/ict317/master's/ENSF 621/Project/Game-review/scripts/collect_steam.py", line 268, in parse_args
+    if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]*',args.snapshot):parser.error('Snapshot must be a simple folder name, without directory traversal or path separators')
+                                                                     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ict317/miniconda3/lib/python3.13/argparse.py", line 2686, in error
+    self.exit(2, _('%(prog)s: error: %(message)s\n') % args)
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ict317/miniconda3/lib/python3.13/argparse.py", line 2673, in exit
+    _sys.exit(status)
+    ~~~~~~~~~^^^^^^^^
+SystemExit: 2
+
+======================================================================
+ERROR: test_empty_page_marks_exhaustion (test_collect_steam.RecoveryTests.test_empty_page_marks_exhaustion)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/ict317/master's/ENSF 621/Project/Game-review/tests/test_collect_steam.py", line 120, in test_empty_page_marks_exhaustion
+    folder,args=self.fixture();client=QueueClient([{'success':1,'reviews':[],'cursor':'*'}])
+                ~~~~~~~~~~~~^^
+  File "/home/ict317/master's/ENSF 621/Project/Game-review/tests/test_collect_steam.py", line 31, in fixture
+    args=c.parse_args(['--review-api','legacy','--min-words',str(minimum),'--reviews-per-game',str(target)])
+  File "/home/ict317/master's/ENSF 621/Project/Game-review/scripts/collect_steam.py", line 268, in parse_args
+    if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]*',args.snapshot):parser.error('Snapshot must be a simple folder name, without directory traversal or path separators')
+                                                                     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ict317/miniconda3/lib/python3.13/argparse.py", line 2686, in error
+    self.exit(2, _('%(prog)s: error: %(message)s\n') % args)
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ict317/miniconda3/lib/python3.13/argparse.py", line 2673, in exit
+    _sys.exit(status)
+    ~~~~~~~~~^^^^^^^^
+SystemExit: 2
+
+======================================================================
+ERROR: test_filter_counts_target_while_preserving_short_rows (test_collect_steam.RecoveryTests.test_filter_counts_target_while_preserving_short_rows)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/ict317/master's/ENSF 621/Project/Game-review/tests/test_collect_steam.py", line 102, in test_filter_counts_target_while_preserving_short_rows
+    folder,args=self.fixture(target=1)
+                ~~~~~~~~~~~~^^^^^^^^^^
+  File "/home/ict317/master's/ENSF 621/Project/Game-review/tests/test_collect_steam.py", line 31, in fixture
+    args=c.parse_args(['--review-api','legacy','--min-words',str(minimum),'--reviews-per-game',str(target)])
+  File "/home/ict317/master's/ENSF 621/Project/Game-review/scripts/collect_steam.py", line 268, in parse_args
+    if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]*',args.snapshot):parser.error('Snapshot must be a simple folder name, without directory traversal or path separators')
+                                                                     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ict317/miniconda3/lib/python3.13/argparse.py", line 2686, in error
+    self.exit(2, _('%(prog)s: error: %(message)s\n') % args)
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ict317/miniconda3/lib/python3.13/argparse.py", line 2673, in exit
+    _sys.exit(status)
+    ~~~~~~~~~^^^^^^^^
+SystemExit: 2
+
+======================================================================
+ERROR: test_rerun_larger_target_continues_saved_cursor (test_collect_steam.RecoveryTests.test_rerun_larger_target_continues_saved_cursor)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/ict317/master's/ENSF 621/Project/Game-review/tests/test_collect_steam.py", line 93, in test_rerun_larger_target_continues_saved_cursor
+    folder,args=self.fixture(target=1)
+                ~~~~~~~~~~~~^^^^^^^^^^
+  File "/home/ict317/master's/ENSF 621/Project/Game-review/tests/test_collect_steam.py", line 31, in fixture
+    args=c.parse_args(['--review-api','legacy','--min-words',str(minimum),'--reviews-per-game',str(target)])
+  File "/home/ict317/master's/ENSF 621/Project/Game-review/scripts/collect_steam.py", line 268, in parse_args
+    if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]*',args.snapshot):parser.error('Snapshot must be a simple folder name, without directory traversal or path separators')
+                                                                     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ict317/miniconda3/lib/python3.13/argparse.py", line 2686, in error
+    self.exit(2, _('%(prog)s: error: %(message)s\n') % args)
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ict317/miniconda3/lib/python3.13/argparse.py", line 2673, in exit
+    _sys.exit(status)
+    ~~~~~~~~~^^^^^^^^
+SystemExit: 2
+
+----------------------------------------------------------------------
+Ran 15 tests in 0.169s
+
+FAILED (errors=5)
