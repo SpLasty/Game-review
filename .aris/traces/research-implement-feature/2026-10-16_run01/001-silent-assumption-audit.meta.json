@@ -1,0 +1,12 @@
+{
+  "call_number": 1,
+  "purpose": "silent-assumption-audit",
+  "timestamp": "2026-10-16T23:16:08.295806+00:00",
+  "agent_id": "/root/data_assumption_audit",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "xhigh",
+  "reviewer_family": "openai",
+  "review_independence": "same-family",
+  "acceptance_status": "provisional",
+  "status": "ok"
+}
