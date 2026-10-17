@@ -97,4 +97,6 @@ ASK mode is `never`: approved implementation proceeds with explicit defaults rec
 
 ## Verification record
 
-The regression suite passes 62 tests. The actual data run and final audit results are recorded in the build note. The assumption sweep uses a fresh same-family reviewer and is provisional; deterministic test and dataset-gate results are reported separately.
+The regression suite passes 62 tests, Ruff passes, and the final actual snapshot passes 175 publication gates. Repeating the offline orchestration reused the same snapshot and preserved the existing annotation queue. Original CSV checksums are unchanged. Examples and notebook code executed against actual published tables.
+
+All five implementation rungs passed. The fresh assumption review found four undeclared semantic defaults and three stale ledger rows in round one; these were documented/corrected. Round two found zero remaining gaps. This is a same-family, provisional review, recorded separately from deterministic checks in [the build note](../implement-stage/data-pipeline/BUILD_NOTE.md) and its adjacent raw audit artifacts. No live stubs remain.

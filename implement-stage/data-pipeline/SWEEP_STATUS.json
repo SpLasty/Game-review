@@ -1,0 +1,13 @@
+{
+  "review_independence": "same-family",
+  "acceptance_status": "provisional",
+  "reviewer": "gpt-6-astra",
+  "reasoning_effort": "xhigh",
+  "rounds_used": 2,
+  "round_budget": 2,
+  "initial_undeclared_semantic_assumptions": 4,
+  "initial_stale_rows": 3,
+  "final_undeclared_semantic_assumptions": 0,
+  "final_stale_rows": 0,
+  "note": "The raw reviewer verdict is retained verbatim. A same-family review can flag gaps but cannot independently acquit the implementation. Deterministic tests and publication gates passed separately."
+}
