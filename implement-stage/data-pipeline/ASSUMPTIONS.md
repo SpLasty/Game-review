@@ -39,6 +39,20 @@
 
 ## Notes
 
+### LLM-only labeling extension (user requests no human annotation)
+
+| ID | Underdetermined choice | Chosen | Class | Source |
+| --- | --- | --- | --- | --- |
+| P34 | LLM-only supervision | Human labeling is optional. Preserve machine-generated annotations and training pairs in separate llm_annotations/silver_pairs tables; human gold tables remain human-only. Models can explicitly load silver pairs without any human labels. | semantic | user |
+| P35 | File transport | Export self-contained Markdown batches, response schema and manifest; import JSONL/JSON responses with an operator-supplied model/run identity. No provider API calls, credentials or paid inference are invoked. Default export covers development games only. | interface | default |
+| P36 | LLM evidence and trust | Require exact canonical source quotes; compute offsets for unique quotes, require explicit start for repeated quotes. Treat all source text as untrusted task data. Record prompt version, model, run, rationale and self-reported confidence, which is not a calibrated probability. | semantic | default |
+| P37 | Machine acceptance | Accept structurally valid relevant/irrelevant decisions as silver only. Exclude uncertain relevance, cross-split duplicates and candidates with conflicting active machine decisions. A single run can qualify; multiple agreeing runs improve auditability but do not establish ground truth. | semantic | default |
+| P38 | Label lifetime | Import against the frozen exported snapshot and exact job membership. Preserve earlier runs; current pipeline rejects stale machine candidate IDs rather than transferring them to changed text. To correct a machine run use a new job and explicitly supersede older same-candidate machine annotation IDs. | interface | default |
+| P39 | LLM-only readiness/evaluation | Expose silver training availability separately from human-supervised readiness. Evaluation against machine labels measures agreement with the labeling process; no independently validated accuracy is claimed without independent reference labels. | semantic | default |
+| P40 | Bounded file batches | Default batches contain at most ten examples and 100,000 source JSON characters; never truncate evidence. Oversized individual examples remain intact in a separately flagged batch. Limit defaults are transport heuristics, not provider token limits. | interface | default |
+| P41 | Default annotation handoff | prepare-data exports/preserves a dataset-specific LLM job by default and reports llm_annotation_job. Human queues remain available through their explicit export command. Job generation makes no model call; returning model response files is a separate operator step. | interface | user |
+| P42 | Export/API whitespace differences | Actual online backfill returned whitespace-only differences from the CSV for identical review/update IDs. Preserve both raw revisions but accept them when canonical NFC/whitespace text and recommendation agree; use latest observed metadata for equal-update equivalent revisions. Differing canonical text or votes still fail. | semantic | default |
+
 - P07: Steam update categories may be missing from the documented news API. Their absence remains unknown. Patch-note type confirmation does not confirm release deployment or fix effectiveness.
 - P12: Split allocation is frozen from game IDs and seed, not patch suitability, labels, or model scores. Pipeline decisions must use development games; held-out games remain available for raw quality auditing only.
 - P15: Online collection can recover missing review periods, but reviews returned now retain their latest text/vote, including edits made after the event.

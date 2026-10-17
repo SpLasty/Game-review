@@ -187,6 +187,15 @@ def run_pipeline(config: PipelineConfig, stage: str = "all") -> dict:
             doc_result["announcements"],
         )
         labeled, label_stats = labeled_exports(exports["model_pair_inputs"], annotations)
+        from steam_insights.pipeline.llm_annotations import silver_exports, validate_llm_annotations
+
+        machine = validate_llm_annotations(
+            read_annotation_file(config.input("llm_annotations")),
+            candidates,
+            review_result["reviews"],
+            doc_result["announcements"],
+        )
+        silver, silver_stats = silver_exports(exports["model_pair_inputs"], machine)
         tables = {
             **{name: review_result[name] for name in REVIEW_TABLES},
             **{name: doc_result[name] for name in ANNOUNCEMENT_TABLES},
@@ -196,6 +205,8 @@ def run_pipeline(config: PipelineConfig, stage: str = "all") -> dict:
             "candidates": candidates,
             "annotations": annotations,
             "labeled_pairs": labeled,
+            "llm_annotations": machine,
+            "silver_pairs": silver,
             "source_records": review_result["source_records"] + doc_result["source_records"],
             "quarantine": review_result["quarantine"] + doc_result["quarantine"],
         }
@@ -229,10 +240,12 @@ def run_pipeline(config: PipelineConfig, stage: str = "all") -> dict:
                     "announcements": doc_result["stats"],
                     "splits": split_stats,
                     "annotations": label_stats,
+                    "llm_annotations": silver_stats,
                 },
                 "tables": metadata,
                 "readiness": {
                     **label_stats,
+                    **silver_stats,
                     **split_stats,
                     "inference_inputs_ready": bool(
                         exports["model_review_inputs"] and exports["model_change_inputs"]

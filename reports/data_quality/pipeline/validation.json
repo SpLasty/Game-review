@@ -1,6 +1,6 @@
 {
   "passed": true,
-  "checks": 175,
+  "checks": 196,
   "results": [
     {
       "check": "source_records:exists",
@@ -423,6 +423,46 @@
       "detail": null
     },
     {
+      "check": "llm_annotations:exists",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "llm_annotations:schema",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "llm_annotations:row_count",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "llm_annotations:sha256",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "silver_pairs:exists",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "silver_pairs:schema",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "silver_pairs:row_count",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "silver_pairs:sha256",
+      "passed": true,
+      "detail": null
+    },
+    {
       "check": "games:unique_keys",
       "passed": true,
       "detail": 0
@@ -633,6 +673,26 @@
       "detail": 0
     },
     {
+      "check": "llm_annotations:unique_keys",
+      "passed": true,
+      "detail": 0
+    },
+    {
+      "check": "llm_annotations:non_null_key:annotation_id",
+      "passed": true,
+      "detail": 0
+    },
+    {
+      "check": "silver_pairs:unique_keys",
+      "passed": true,
+      "detail": 0
+    },
+    {
+      "check": "silver_pairs:non_null_key:candidate_id",
+      "passed": true,
+      "detail": 0
+    },
+    {
       "check": "review_revisions:game_split",
       "passed": true,
       "detail": 0
@@ -699,6 +759,11 @@
     },
     {
       "check": "labeled_pairs:game_split",
+      "passed": true,
+      "detail": 0
+    },
+    {
+      "check": "silver_pairs:game_split",
       "passed": true,
       "detail": 0
     },
@@ -783,6 +848,16 @@
       "detail": 0
     },
     {
+      "check": "llm_annotations:candidate_id:foreign_key",
+      "passed": true,
+      "detail": 0
+    },
+    {
+      "check": "silver_pairs:annotation_id:foreign_key",
+      "passed": true,
+      "detail": 0
+    },
+    {
       "check": "review_revisions:source_lineage",
       "passed": true,
       "detail": 0
@@ -854,6 +929,36 @@
     },
     {
       "check": "labeled_pairs:no_flagged_duplicates",
+      "passed": true,
+      "detail": 0
+    },
+    {
+      "check": "llm_annotations:machine_only",
+      "passed": true,
+      "detail": 0
+    },
+    {
+      "check": "silver_pairs:machine_only",
+      "passed": true,
+      "detail": 0
+    },
+    {
+      "check": "silver_pairs:no_flagged_duplicates",
+      "passed": true,
+      "detail": 0
+    },
+    {
+      "check": "silver_pairs:accepted_relevance",
+      "passed": true,
+      "detail": 0
+    },
+    {
+      "check": "llm_annotations:exact_review_evidence",
+      "passed": true,
+      "detail": 0
+    },
+    {
+      "check": "llm_annotations:exact_change_evidence",
       "passed": true,
       "detail": 0
     },

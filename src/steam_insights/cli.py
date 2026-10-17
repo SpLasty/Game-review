@@ -25,6 +25,8 @@ def main(argv: list[str] | None = None) -> int:
             "pipeline-validate",
             "annotations-export",
             "annotations-import",
+            "llm-annotations-export",
+            "llm-annotations-import",
         ],
     )
     parser.add_argument("--config", type=Path)
@@ -44,8 +46,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--max-requests", type=int, help="Override the bounded online request budget"
     )
-    parser.add_argument("--input", type=Path, help="Completed human annotation JSONL")
-    parser.add_argument("--output", type=Path, help="Annotation queue output JSONL")
+    parser.add_argument("--input", type=Path, help="Completed annotation JSONL/JSON")
+    parser.add_argument("--output", type=Path, help="Queue file or LLM job directory")
+    parser.add_argument("--job", type=Path, help="Frozen LLM export job directory")
+    parser.add_argument("--model", help="Model/version used for LLM labeling (operator supplied)")
+    parser.add_argument("--run-id", help="Distinct LLM labeling pass identifier")
+    parser.add_argument("--batch-size", type=int, default=10)
+    parser.add_argument("--max-batch-chars", type=int, default=100_000)
     parser.add_argument("--sample-size", type=int, default=100)
     parser.add_argument(
         "--split",
@@ -62,6 +69,8 @@ def main(argv: list[str] | None = None) -> int:
             "pipeline-validate",
             "annotations-export",
             "annotations-import",
+            "llm-annotations-export",
+            "llm-annotations-import",
         }:
             from steam_insights.pipeline.runner import run_pipeline
             from steam_insights.pipeline.settings import load_pipeline_config

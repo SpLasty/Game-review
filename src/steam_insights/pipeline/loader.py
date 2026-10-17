@@ -21,7 +21,14 @@ def latest_dataset(config):
 
 
 def iter_model_batches(
-    directory, *, kind="pairs", split=None, task=None, labeled=False, batch_size=512
+    directory,
+    *,
+    kind="pairs",
+    split=None,
+    task=None,
+    labeled=False,
+    label_source="human",
+    batch_size=512,
 ):
     table_names = {
         "reviews": "model_review_inputs",
@@ -32,8 +39,18 @@ def iter_model_batches(
         raise ValueError("Invalid model kind or batch size")
     if labeled and kind != "pairs":
         raise ValueError("Supervised exports currently use review-change pairs")
+    if label_source not in {"human", "llm"} or (label_source == "llm" and not labeled):
+        raise ValueError("label_source must be human or llm; llm requires labeled=True")
     dataset = ds.dataset(
-        directory / (("labeled_pairs" if labeled else table_names[kind]) + ".parquet"),
+        directory
+        / (
+            (
+                ("silver_pairs" if label_source == "llm" else "labeled_pairs")
+                if labeled
+                else table_names[kind]
+            )
+            + ".parquet"
+        ),
         format="parquet",
     )
     predicate = None

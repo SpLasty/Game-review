@@ -67,6 +67,8 @@ def validate_snapshot(directory, *, verify_hashes=True) -> dict:
         "model_change_inputs": "change_id",
         "model_pair_inputs": "candidate_id",
         "labeled_pairs": "candidate_id",
+        "llm_annotations": "annotation_id",
+        "silver_pairs": "candidate_id",
     }
     for table, key in primary_keys.items():
         zero(
@@ -121,6 +123,8 @@ def validate_snapshot(directory, *, verify_hashes=True) -> dict:
         ("model_change_inputs", "change_id", "changes", "change_id"),
         ("model_pair_inputs", "candidate_id", "candidates", "candidate_id"),
         ("labeled_pairs", "annotation_id", "annotations", "annotation_id"),
+        ("llm_annotations", "candidate_id", "candidates", "candidate_id"),
+        ("silver_pairs", "annotation_id", "llm_annotations", "annotation_id"),
     ]:
         zero(
             f"{child}:{child_key}:foreign_key",
@@ -193,6 +197,34 @@ def validate_snapshot(directory, *, verify_hashes=True) -> dict:
         "labeled_pairs:no_flagged_duplicates",
         "SELECT count(*) FROM labeled_pairs WHERE cross_split_duplicate",
     )
+    zero(
+        "llm_annotations:machine_only",
+        "SELECT count(*) FROM llm_annotations WHERE label_source IS DISTINCT FROM 'llm' OR adjudicated IS DISTINCT FROM false",
+    )
+    zero(
+        "silver_pairs:machine_only",
+        "SELECT count(*) FROM silver_pairs WHERE label_source IS DISTINCT FROM 'llm'",
+    )
+    zero(
+        "silver_pairs:no_flagged_duplicates",
+        "SELECT count(*) FROM silver_pairs WHERE cross_split_duplicate",
+    )
+    zero(
+        "silver_pairs:accepted_relevance",
+        "SELECT count(*) FROM silver_pairs WHERE relevance IS NULL OR relevance NOT IN ('relevant','irrelevant')",
+    )
+    for prefix, parent, key, canonical in [
+        ("review", "reviews", "review_revision_id", "review_text"),
+        ("change", "announcements", "announcement_revision_id", "canonical_text"),
+    ]:
+        zero(
+            "llm_annotations:exact_" + prefix + "_evidence",
+            f"""SELECT count(*) FROM llm_annotations a
+            JOIN candidates c USING(candidate_id) JOIN {parent} p ON c.{key}=p.{key}
+            WHERE a.{prefix}_evidence_text IS NOT NULL AND
+            (a.{prefix}_evidence_start < 0 OR a.{prefix}_evidence_end <= a.{prefix}_evidence_start OR
+            a.{prefix}_evidence_text <> substr(p.{canonical}, a.{prefix}_evidence_start+1, a.{prefix}_evidence_end-a.{prefix}_evidence_start))""",
+        )
     for field in ("exact_duplicate_group", "near_duplicate_group"):
         zero(
             "labeled_pairs:no_leakage:" + field,

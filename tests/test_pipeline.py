@@ -79,6 +79,23 @@ class ReviewPipelineTests(unittest.TestCase):
                 [review_fixture(), review_fixture(recommended="True")], self.config
             )
 
+    def test_same_time_export_whitespace_variants_preserve_raw_and_latest_metadata(self):
+        first = review_fixture()
+        second = review_fixture(
+            review_text=first["review_text"] + "\n",
+            observed_at="2026-10-17T04:00:00Z",
+            lifetime_playtime_hours=123,
+        )
+        result = prepare_review_observations([first, second], self.config)
+        self.assertEqual(len(result["review_revisions"]), 2)
+        self.assertEqual(len(result["reviews"]), 1)
+        self.assertEqual(result["reviews"][0]["review_text_original"], second["review_text"])
+        self.assertEqual(result["reviews"][0]["lifetime_playtime_hours"], 123)
+        with self.assertRaisesRegex(ValueError, "Conflicting"):
+            prepare_review_observations(
+                [first, review_fixture(review_text="Changed actual content")], self.config
+            )
+
     def test_invalid_record_is_quarantined_without_losing_valid_record(self):
         result = prepare_review_observations(
             [review_fixture(), review_fixture(review_id="1234", recommended="maybe")], self.config

@@ -6,6 +6,7 @@ data_config = "configs/data.toml"
 raw_archive = "data/raw/steam_30_games"
 recovery_dir = "data/raw/pipeline_recovery"
 annotations = "data/annotations/labels.jsonl"
+llm_annotations = "data/annotations/llm_labels.jsonl"
 patch_verification = "data/annotations/patch_verification.jsonl"
 
 [outputs]

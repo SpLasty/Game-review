@@ -1,8 +1,10 @@
 """One resumable operator command for collection through validated model inputs."""
 
+import json
+
 from steam_insights.data.io import write_json
-from steam_insights.pipeline.annotations import export_annotation_queue
 from steam_insights.pipeline.checks import validate_snapshot
+from steam_insights.pipeline.llm_annotations import export_llm_job
 from steam_insights.pipeline.loader import latest_dataset
 from steam_insights.pipeline.runner import run_pipeline
 from steam_insights.pipeline.sources import PublicSteamClient, backfill_reviews, recover_sources
@@ -53,14 +55,17 @@ def prepare_data(config, *, online=False, refresh=False, sample_size=100):
             key: value for key, value in validate_snapshot(directory).items() if key != "results"
         },
     )
-    queue = step(
-        "export_development_annotation_queue",
-        lambda: export_annotation_queue(
-            directory,
-            config.root / "data" / "annotations" / "queues" / (directory.name + ".jsonl"),
-            sample_size=sample_size,
-        ),
-    )
+
+    def annotation_handoff():
+        output = config.root / "data/annotations/llm_jobs" / directory.name
+        if (output / "manifest.json").exists():
+            job = json.loads((output / "manifest.json").read_text())
+            if job["dataset_id"] != directory.name:
+                raise ValueError("LLM handoff job disagrees with the published dataset")
+            return {"output": str(output), "status": "existing_job_preserved"}
+        return export_llm_job(directory, output, sample_size=sample_size)
+
+    queue = step("export_development_llm_job", annotation_handoff)
     from steam_insights.data.quality_report import generate_quality_report
 
     step(
@@ -75,8 +80,8 @@ def prepare_data(config, *, online=False, refresh=False, sample_size=100):
         finished_utc=utc_now(),
         dataset_id=build["dataset_id"],
         validation_checks=checked["checks"],
-        annotation_queue=queue["output"],
-        next="Review data-quality report and annotate queue; import labels and rerun prepare-data.",
+        llm_annotation_job=queue["output"],
+        next="Give batch Markdown files to an LLM, import responses, then rerun prepare-data. Human annotation is optional.",
     )
     write_json(journal, state)
     return {
@@ -84,8 +89,8 @@ def prepare_data(config, *, online=False, refresh=False, sample_size=100):
         "dataset_id": build["dataset_id"],
         "output": str(directory),
         "report": str(config.output("reports_dir") / "report.md"),
-        "annotation_queue": queue["output"],
+        "llm_annotation_job": queue["output"],
         "journal": str(journal),
         "validation_checks": checked["checks"],
-        "note": "Processing completion does not imply complete collection or availability of human training labels.",
+        "note": "Processing completion does not imply complete collection or labeled training data. LLM response import requires no human annotation.",
     }

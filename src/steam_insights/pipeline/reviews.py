@@ -187,12 +187,13 @@ def prepare_review_observations(observations: list[dict], config) -> dict:
             continue
         revision_id = stable_id("review_revision_v1", entity, updated.isoformat(), original, vote)
         conflict_key = (entity, updated)
-        if conflict_key in payloads and payloads[conflict_key] != revision_id:
+        canonical_payload = stable_id(canonical, vote)
+        if conflict_key in payloads and payloads[conflict_key] != canonical_payload:
             raise ValueError(f"Conflicting review text/vote for same ID and update time: {entity}")
         if entity in created_times and created_times[entity] != created:
             raise ValueError(f"Conflicting review creation timestamp: {entity}")
         created_times[entity] = created
-        payloads[conflict_key] = revision_id
+        payloads[conflict_key] = canonical_payload
         source.update(entity_id=entity, revision_id=revision_id, observed_at=observed)
         sources.append(source)
         detected, probability = None, None
@@ -276,7 +277,18 @@ def prepare_review_observations(observations: list[dict], config) -> dict:
     current = {}
     for row in rows:
         key = (row["appid"], row["review_id"])
-        if key not in current or row["updated_utc"] > current[key]["updated_utc"]:
+        if (
+            key not in current
+            or row["updated_utc"] > current[key]["updated_utc"]
+            or (
+                row["updated_utc"] == current[key]["updated_utc"]
+                and row["observed_at"] is not None
+                and (
+                    current[key]["observed_at"] is None
+                    or row["observed_at"] > current[key]["observed_at"]
+                )
+            )
+        ):
             current[key] = row
     latest = sorted(current.values(), key=lambda r: (r["appid"], r["created_utc"], r["review_id"]))
     duplicates, duplicate_stats = _near_duplicates(latest, settings)

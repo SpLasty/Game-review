@@ -1,20 +1,24 @@
 {
-  "dataset_id": "f6ed010d3a378a5a12a4d9e502a41aae540c77b863356eae972189164cec0240",
+  "dataset_id": "f0139aa809f06c9cf88398a10e03acb9a6a14a1e330f930d663aa409c80c0fa7",
   "human_annotations": 0,
   "unresolved_or_uncertain_candidates": 0,
   "labeled_pairs": 0,
   "labeled_pairs_excluded_for_duplicate_leakage": 0,
   "supervised_training_ready": false,
+  "llm_annotations": 0,
+  "silver_pairs": 0,
+  "silver_training_inputs_available": false,
+  "machine_label_conflicts_or_uncertainty": 0,
   "allocation": {
     "test": 20,
     "validation": 2,
     "train": 8
   },
-  "cross_split_duplicate_families": 1053,
-  "current_reviews_excluded_from_supervised_for_duplicate_leakage": 14713,
+  "cross_split_duplicate_families": 1118,
+  "current_reviews_excluded_from_supervised_for_duplicate_leakage": 15718,
   "inference_inputs_ready": true,
   "pair_inference_inputs_ready": true,
-  "language_warnings": 479,
+  "language_warnings": 487,
   "flattened_or_plain_posts": 2531,
   "unknown_release_times": 1100
 }

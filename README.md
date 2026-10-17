@@ -4,6 +4,8 @@ Analyze Steam reviews and developer announcements to build evidence-backed patch
 
 ## Complete data preparation
 
+**No annotators required:** the [LLM-only labeling workflow](docs/llm_annotation_workflow.md) exports self-contained batch files, imports exact-evidence machine responses, and publishes separate silver training pairs. Human annotation is optional.
+
 From `Game-review/`:
 
 ```bash
@@ -11,9 +13,9 @@ uv sync --locked --all-extras
 uv run --all-extras steam-insights prepare-data --online
 ```
 
-This resumes bounded Steam collection, builds Parquet tables and DuckDB views, validates the published snapshot, refreshes reports and exports a development annotation queue. Repeat to continue collection beyond the per-run request budget. Omit `--online` to process local inputs only. Existing annotation queues are preserved.
+This resumes bounded Steam collection, builds Parquet tables and DuckDB views, validates the published snapshot, refreshes reports and exports development LLM annotation jobs. Repeat to continue collection beyond the per-run request budget. Omit `--online` to process local inputs only. Existing jobs are preserved.
 
-Read the [pipeline guide](docs/data_pipeline.md), [completion and handoff record](docs/data_pipeline_status.md), [data dictionary](docs/data_dictionary.md), and [current readiness report](reports/data_quality/pipeline/report.md). Source confirmation identifies patch-note posts; human labels and sufficient historical review coverage remain separate requirements.
+Read the [pipeline guide](docs/data_pipeline.md), [completion and handoff record](docs/data_pipeline_status.md), [data dictionary](docs/data_dictionary.md), and [current readiness report](reports/data_quality/pipeline/report.md). Source confirmation identifies patch-note posts. Training can use LLM silver labels; source coverage and independently validated evaluation remain separate questions.
 
 ## Quick start
 

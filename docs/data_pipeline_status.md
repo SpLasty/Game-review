@@ -1,5 +1,7 @@
 # Processing implementation and handoff
 
+**Updated labeling route:** [LLM-only annotation](llm_annotation_workflow.md) is implemented and is now the default preparation handoff. No human annotation is required. Machine labels are published as separate silver data; human gold is optional. The original completion record below predates this extension.
+
 ## Run the remaining automated work
 
 From `Game-review/`:
@@ -9,7 +11,7 @@ uv sync --locked --all-extras
 uv run --all-extras steam-insights prepare-data --online
 ```
 
-The second command recovers original announcement content, prepares the review collection plan, backfills insufficient fully elapsed patch windows, publishes model-input Parquet tables, validates them, refreshes both quality reports and exports a development annotation queue. It shares 60 HTTP requests per invocation by default. Repeat it to resume saved cursors and advance through more windows. A completed run does not imply Steam has enough reviews for every window.
+The second command recovers original announcement content, prepares the review collection plan, backfills insufficient fully elapsed patch windows, publishes model-input Parquet tables, validates them, refreshes both quality reports and exports a development LLM annotation job. It shares 60 HTTP requests per invocation by default. Repeat it to resume saved cursors and advance through more windows. A completed run does not imply Steam has enough reviews for every window.
 
 Use `uv run --all-extras steam-insights prepare-data` for local processing without network requests. Small independent commands are in `scripts/data/`; their logic is shared with the main workflow.
 
@@ -42,7 +44,7 @@ Latest row counts, source-confirmed post counts, games and passing periods are i
 
 ## Data still needed before supervised modeling
 
-1. Human relevance, change-specific sentiment and fix-status annotations with exact evidence, including held-out evaluation annotations under a frozen protocol. There are currently no gold labels.
+1. LLM relevance, change-specific sentiment and fix-status responses with exact evidence. Human gold labels are optional; without independent reference labels, evaluation measures teacher agreement.
 2. More date-bounded reviews around the selected patch periods. Exhausted sparse periods remain unsuitable when minimum counts/date coverage are unmet.
 3. Original heading/list markup for the remaining flattened announcements, from the collection archive or official sources.
 4. Supported effective release times and platform/branch scope where analysis requires them. Current publication times are proxies when deployment evidence is missing.
@@ -100,3 +102,29 @@ ASK mode is `never`: approved implementation proceeds with explicit defaults rec
 The regression suite passes 62 tests, Ruff passes, and the final actual snapshot passes 175 publication gates. Repeating the offline orchestration reused the same snapshot and preserved the existing annotation queue. Original CSV checksums are unchanged. Examples and notebook code executed against actual published tables.
 
 All five implementation rungs passed. The fresh assumption review found four undeclared semantic defaults and three stale ledger rows in round one; these were documented/corrected. Round two found zero remaining gaps. This is a same-family, provisional review, recorded separately from deterministic checks in [the build note](../implement-stage/data-pipeline/BUILD_NOTE.md) and its adjacent raw audit artifacts. No live stubs remain.
+
+## LLM-only extension (pipeline 1.1.0)
+
+The user requested operation without human annotators. `prepare-data` now exports a self-contained LLM job instead of requiring a human queue. `llm-annotations-export` produces Markdown batches, JSONL inputs, instructions, a response schema and frozen membership metadata. `llm-annotations-import` accepts file/directory responses, validates exact canonical quotes and machine provenance, and writes separate `llm_labels.jsonl`. Repeated imports are idempotent.
+
+The pipeline publishes `llm_annotations.parquet` and `silver_pairs.parquet`; the model loader supports `labeled=True, label_source="llm"`. No human adjudication or human labels are required to train on this route. Uncertain/conflicting machine decisions and cross-split duplicates are excluded. Model/run/prompt identity, evidence, rationale and self-reported confidence remain auditable. No model API is called by these file tools.
+
+Evaluation using silver references measures agreement with their labeling process, not independently validated human accuracy. Current export covers the lexical candidate population. See [the full commands and interpretation guide](llm_annotation_workflow.md).
+
+A full run encountered a real CSV/API whitespace-only review difference under the same review/update ID. Both raw observations are now retained, equivalent canonical text/vote is accepted, and the latest observed metadata wins. Real canonical-text or vote conflicts still fail. This has a dedicated regression test.
+
+### Extension decisions
+
+Verification: 70 unit tests, Ruff and 196 actual publication gates passed. The actual snapshot has 76,861 reviews and 29,183 candidate pairs. A 20-example pilot in four Markdown batches exists at `data/annotations/llm_jobs/pilot`; no real LLM responses have been imported yet. The default prepare-data job exports up to 100 examples. Earlier review results above describe version 1.0; this extension is executor/test verified.
+
+| ID | Underdetermined choice | Chosen | Class | Source |
+| --- | --- | --- | --- | --- |
+| P34 | LLM-only supervision | Human labeling is optional. Preserve machine-generated annotations and training pairs in separate llm_annotations/silver_pairs tables; human gold tables remain human-only. Models can explicitly load silver pairs without any human labels. | semantic | user |
+| P35 | File transport | Export self-contained Markdown batches, response schema and manifest; import JSONL/JSON responses with an operator-supplied model/run identity. No provider API calls, credentials or paid inference are invoked. Default export covers development games only. | interface | default |
+| P36 | LLM evidence and trust | Require exact canonical source quotes; compute offsets for unique quotes, require explicit start for repeated quotes. Treat all source text as untrusted task data. Record prompt version, model, run, rationale and self-reported confidence, which is not a calibrated probability. | semantic | default |
+| P37 | Machine acceptance | Accept structurally valid relevant/irrelevant decisions as silver only. Exclude uncertain relevance, cross-split duplicates and candidates with conflicting active machine decisions. A single run can qualify; multiple agreeing runs improve auditability but do not establish ground truth. | semantic | default |
+| P38 | Label lifetime | Import against the frozen exported snapshot and exact job membership. Preserve earlier runs; current pipeline rejects stale machine candidate IDs rather than transferring them to changed text. To correct a machine run use a new job and explicitly supersede older same-candidate machine annotation IDs. | interface | default |
+| P39 | LLM-only readiness/evaluation | Expose silver training availability separately from human-supervised readiness. Evaluation against machine labels measures agreement with the labeling process; no independently validated accuracy is claimed without independent reference labels. | semantic | default |
+| P40 | Bounded file batches | Default batches contain at most ten examples and 100,000 source JSON characters; never truncate evidence. Oversized individual examples remain intact in a separately flagged batch. Limit defaults are transport heuristics, not provider token limits. | interface | default |
+| P41 | Default annotation handoff | prepare-data exports/preserves a dataset-specific LLM job by default and reports llm_annotation_job. Human queues remain available through their explicit export command. Job generation makes no model call; returning model response files is a separate operator step. | interface | user |
+| P42 | Export/API whitespace differences | Actual online backfill returned whitespace-only differences from the CSV for identical review/update IDs. Preserve both raw revisions but accept them when canonical NFC/whitespace text and recommendation agree; use latest observed metadata for equal-update equivalent revisions. Differing canonical text or votes still fail. | semantic | default |

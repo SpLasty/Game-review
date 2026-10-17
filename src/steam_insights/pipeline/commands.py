@@ -15,6 +15,31 @@ from steam_insights.pipeline.storage import read_table
 
 def annotation_or_validation_command(config, args):
     directory = latest_dataset(config)
+    if args.command.startswith("llm-annotations-"):
+        from steam_insights.pipeline.llm_annotations import export_llm_job, import_llm_responses
+
+        if args.command == "llm-annotations-import":
+            if not args.job or not args.input:
+                raise ValueError("LLM import requires --job and --input")
+            return import_llm_responses(
+                config, args.job, args.input, model_name=args.model, run_id=args.run_id
+            )
+        splits = (
+            ("train", "validation")
+            if args.split == "development"
+            else ("train", "validation", "test")
+            if args.split == "all"
+            else (args.split,)
+        )
+        output = args.output or config.root / "data/annotations/llm_jobs" / directory.name
+        return export_llm_job(
+            directory,
+            output,
+            sample_size=args.sample_size,
+            splits=splits,
+            batch_size=args.batch_size,
+            max_batch_chars=args.max_batch_chars,
+        )
     if args.command == "pipeline-validate":
         result = validate_snapshot(directory)
         return {"dataset": directory.name, "passed": result["passed"], "checks": result["checks"]}

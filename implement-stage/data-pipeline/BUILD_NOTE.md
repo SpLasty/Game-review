@@ -39,3 +39,15 @@ Historical review backfill is implemented and tested with simulated responses bu
 Repeated offline `prepare-data` exited 0, reused the same final snapshot, preserved its existing annotation queue, and completed report refresh. Both the orchestration journal and publication validation record 175 passed gates.
 
 Assumption sweep: round one found four undeclared semantic defaults and three stale rows. P27-P33 document these choices; title/status context, conflicting observation handling and operational metadata identity were corrected and covered by regressions. Round two returned zero undeclared assumptions and zero stale rows. The raw replies are saved alongside this note; review independence is **same-family**, acceptance **provisional**. This is not a claim of independent correctness. All five MUST rung checks passed.
+
+## LLM-only extension — pipeline 1.1.0
+
+The user requested machine labeling without human annotators. P34-P42 record the new contracts before dependent implementation. Human labels are optional; machine labels remain explicitly separate. Added provider-neutral Markdown/JSONL jobs, schema/prompt metadata, exact-quote machine import, separate llm_annotations/silver_pairs Parquet tables, explicit machine-source loader, and a default LLM handoff in prepare-data. No model API is called or machine labels fabricated.
+
+Acceptance: all **70 unit tests** passed; Ruff checks and formatting passed. The full actual `prepare-data` command exited 0 and published snapshot `f0139aa809f06c9cf88398a10e03acb9a6a14a1e330f930d663aa409c80c0fa7` with **196 publication gates passed**. It contains 76,861 current reviews, 3,638 current posts and 29,183 candidate pairs after incorporating source backfill already present on disk. The original three CSV checksums remain unchanged.
+
+An actual build exposed a harmless whitespace-only difference between the CSV and API observations for review 108600:236198476. Canonical text and vote agree. Preserve both raw revisions, accept equivalent canonical payloads, and prefer the latest observation for equal-update metadata; actual canonical-text/vote conflicts still fail. A regression covers this behavior.
+
+Generated a separate pilot at `data/annotations/llm_jobs/pilot`: 20 development examples in four self-contained Markdown batches. The default handoff contains up to 100 examples. Machine/human label tables remain empty until actual responses are imported. Import tests use explicitly synthetic fixtures and prove idempotence, exact quote validation, Unicode offsets, provenance separation, atomic failure, conflict/uncertainty exclusion, explicit supersession, model batch loading, JSON arrays and response directories. They do not establish semantic label accuracy.
+
+The earlier same-family assumption sweep records the completed 1.0 implementation. This 1.1 extension was checked by the executor and deterministic tests; it has not received a new independent model review. See docs/llm_annotation_workflow.md for the pipeline and remaining operator steps.

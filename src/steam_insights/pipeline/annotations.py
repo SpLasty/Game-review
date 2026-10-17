@@ -35,7 +35,9 @@ def read_annotation_file(path) -> list[dict]:
     ]
 
 
-def validate_annotations(records: list[dict], candidates, reviews, announcements) -> list[dict]:
+def validate_annotations(
+    records: list[dict], candidates, reviews, announcements, *, expected_source="human"
+) -> list[dict]:
     by_candidate = {r["candidate_id"]: r for r in candidates}
     by_review = {r["review_revision_id"]: r for r in reviews}
     by_doc = {r["announcement_revision_id"]: r for r in announcements}
@@ -59,12 +61,12 @@ def validate_annotations(records: list[dict], candidates, reviews, announcements
                 f"Annotation references an unknown/stale candidate: {record['candidate_id']}"
             )
         if (
-            record["label_source"] != "human"
+            record["label_source"] != expected_source
             or type(record["adjudicated"]) is not bool
             or not str(record["annotator_id"]).strip()
         ):
             raise ValueError(
-                "Labels require a named human annotator and an explicit adjudicated boolean"
+                f"Labels require a named {expected_source} annotator and an explicit adjudicated boolean"
             )
         if (
             record["relevance"] not in RELEVANCE
@@ -132,7 +134,7 @@ def validate_annotations(records: list[dict], candidates, reviews, announcements
             raise ValueError("A fix-status label requires announcement evidence")
         row["supersedes"] = sorted(set(record.get("supersedes", [])))
         identifier_payload = {**row, "created_at": created.isoformat()}
-        row["annotation_id"] = stable_id("human_annotation_v1", identifier_payload)
+        row["annotation_id"] = stable_id(f"{expected_source}_annotation_v1", identifier_payload)
         if record.get("annotation_id") and record["annotation_id"] != row["annotation_id"]:
             raise ValueError("Annotation ID disagrees with its contents")
         validated[row["annotation_id"]] = row
@@ -152,11 +154,15 @@ def validate_annotations(records: list[dict], candidates, reviews, announcements
     )
 
 
-def labeled_exports(model_pairs: list[dict], annotations: list[dict]) -> tuple[list[dict], dict]:
+def labeled_exports(
+    model_pairs: list[dict], annotations: list[dict], *, require_adjudicated=True
+) -> tuple[list[dict], dict]:
     superseded = {identifier for row in annotations for identifier in row["supersedes"]}
     active = defaultdict(list)
     for row in annotations:
-        if row["adjudicated"] and row["annotation_id"] not in superseded:
+        if (row["adjudicated"] or not require_adjudicated) and row[
+            "annotation_id"
+        ] not in superseded:
             active[row["candidate_id"]].append(row)
     labels, conflicts = {}, 0
     for candidate_id, rows in active.items():
@@ -192,20 +198,10 @@ def labeled_exports(model_pairs: list[dict], annotations: list[dict]) -> tuple[l
     }
 
 
-def export_annotation_queue(
-    directory, output, *, sample_size=100, splits=("train", "validation")
-) -> dict:
+def sample_annotation_pairs(directory, *, sample_size=100, splits=("train", "validation")):
     from steam_insights.pipeline.storage import read_table
 
-    if output.exists():
-        return {
-            "output": str(output),
-            "status": "existing_queue_preserved",
-            "note": "An existing queue may contain human work; use a new output filename for another sample.",
-        }
     pairs = read_table(directory, "model_pair_inputs")
-    candidate_map = {r["candidate_id"]: r for r in read_table(directory, "candidates")}
-    documents = {r["announcement_revision_id"]: r for r in read_table(directory, "announcements")}
     groups = defaultdict(list)
     for row in pairs:
         if row["split"] in splits and not row["cross_split_duplicate"]:
@@ -217,6 +213,23 @@ def export_annotation_queue(
         for key in sorted(groups):
             if groups[key] and len(selected) < sample_size:
                 selected.append(groups[key].pop(0))
+    return selected
+
+
+def export_annotation_queue(
+    directory, output, *, sample_size=100, splits=("train", "validation")
+) -> dict:
+    from steam_insights.pipeline.storage import read_table
+
+    if output.exists():
+        return {
+            "output": str(output),
+            "status": "existing_queue_preserved",
+            "note": "An existing queue may contain human work; use a new output filename for another sample.",
+        }
+    selected = sample_annotation_pairs(directory, sample_size=sample_size, splits=splits)
+    candidate_map = {r["candidate_id"]: r for r in read_table(directory, "candidates")}
+    documents = {r["announcement_revision_id"]: r for r in read_table(directory, "announcements")}
     output.parent.mkdir(parents=True, exist_ok=True)
     with output.open("w", encoding="utf-8") as handle:
         for row in selected:

@@ -65,7 +65,7 @@ def source_files(config: PipelineConfig) -> list[Path]:
     paths.extend(archive.glob("*/reviews.jsonl"))
     paths.extend(archive.glob("*/news.json"))
     paths.extend(config.input("recovery_dir").glob("records/**/*.json"))
-    for name in ("annotations", "patch_verification"):
+    for name in ("annotations", "llm_annotations", "patch_verification"):
         if config.input(name).exists():
             paths.append(config.input(name))
     return sorted(set(paths))

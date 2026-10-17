@@ -116,8 +116,11 @@ def write_readiness_report(directory, manifest, reviews, announcements, games, w
         "## Model ingestion readiness",
         "",
         f"- Inference inputs available: **{gap['inference_inputs_ready']}**.",
-        f"- Adjudicated labeled pairs: **{gap['labeled_pairs']:,}**; supervised training ready: **{gap['supervised_training_ready']}**. "
+        f"- Human-adjudicated labeled pairs: **{gap['labeled_pairs']:,}**; human-labeled training inputs available: **{gap['supervised_training_ready']}**. "
         "This flag indicates that some training rows exist, not that label volume, class coverage, or evaluation quality is sufficient.",
+        f"- LLM annotations: **{gap['llm_annotations']:,}**; silver pairs: **{gap['silver_pairs']:,}**; "
+        f"machine-supervised training inputs available: **{gap['silver_training_inputs_available']}**. "
+        "Human annotation is optional. Silver labels are machine supervision; evaluation against them measures teacher agreement, not independently verified accuracy.",
         f"- Cross-split duplicate families: **{gap['cross_split_duplicate_families']:,}**; affected pairs are excluded from supervised export.",
         f"- Source metadata/independent language-detector disagreements: **{gap['language_warnings']:,}**; retained as inspection flags.",
         "",
@@ -129,8 +132,8 @@ def write_readiness_report(directory, manifest, reviews, announcements, games, w
         "Publication time is an explicitly marked proxy.",
         "- Backfill historical review windows where before/after counts or date coverage are insufficient. "
         "The window CSV records deficits. Exhausting a dated API query is tracked separately from passing the sample-density screen.",
-        "- Complete human annotations for relevance, change-specific sentiment, and fix-status evidence. "
-        "A recommendation vote does not supply these labels. Inspect representative parser/verification outputs before using weak hints.",
+        "- For training, generate evidence-backed LLM silver labels with llm-annotations-export/import, or optionally add human labels. "
+        "A recommendation vote does not supply these labels. Human references would be needed for independently validated accuracy, not to run the pipeline.",
         "- Historical review and announcement revisions absent from the archive cannot be reconstructed by fetching their current state. "
         "Edited reviews and newly recovered posts are current observations, with their observation times preserved.",
         "- Overlapping patch posts, beta/platform scope, and external full changelog links need source inspection. "

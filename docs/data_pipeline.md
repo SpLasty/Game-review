@@ -2,6 +2,8 @@
 
 This pipeline prepares versioned, evidence-linked data for model ingestion. The existing `profile`, `quality`, and `preprocess` commands remain available for the original CSV snapshot. The new pipeline adds recovered source observations, structured announcements, change candidates, review/change candidates, and model input contracts.
 
+Human annotation is optional. The default handoff is now an [LLM-only file workflow](llm_annotation_workflow.md), with separate machine silver tables and explicit machine-label loading. Earlier human gold commands remain optional.
+
 ## Run the whole workflow
 
 From `Game-review/`, use Python 3.11+ and uv:
@@ -11,7 +13,7 @@ uv sync --locked --all-extras
 uv run --all-extras steam-insights prepare-data --online
 ```
 
-`--online` enables bounded public Steam requests. It recovers announcement source content, prepares a collection plan, backfills insufficient historical review periods, builds the dataset, validates publication, generates reports, and exports a development annotation queue. The default shared HTTP budget is 60 requests, including retries. Repeating the command resumes cached/paginated collection and reuses unchanged dataset snapshots. Per-game/per-window page caps apply to each invocation. A page cap does not mean collection is complete. Fully exhausted sparse windows stay in the report as insufficient but stop blocking collection of other patches; `--refresh` revisits them.
+`--online` enables bounded public Steam requests. It recovers announcement source content, prepares a collection plan, backfills insufficient historical review periods, builds the dataset, validates publication, generates reports, and exports a development LLM annotation job. The default shared HTTP budget is 60 requests, including retries. Repeating the command resumes cached/paginated collection and reuses unchanged dataset snapshots. Per-game/per-window page caps apply to each invocation. A page cap does not mean collection is complete. Fully exhausted sparse windows stay in the report as insufficient but stop blocking collection of other patches; `--refresh` revisits them.
 
 To process only the inputs already on this machine:
 
@@ -19,7 +21,7 @@ To process only the inputs already on this machine:
 uv run --all-extras steam-insights prepare-data
 ```
 
-The command prints the dataset, quality report, annotation queue, and orchestration journal paths. A completed processing run can still report insufficient source coverage and missing labels. Human annotation files are never fabricated.
+The command prints the dataset, quality report, LLM annotation job, and orchestration journal paths. A completed processing run can still report insufficient source coverage and missing labels. Human annotation files are never fabricated.
 
 ## Data flow
 
@@ -41,8 +43,8 @@ flowchart TD
     H --> P
     W --> P
     P --> M[Model input Parquet views]
-    M --> U[Human annotation export and import]
-    U --> L[Validated adjudicated labeled pairs]
+    M --> U[LLM labeling or optional human annotation]
+    U --> L[Validated machine silver or optional human gold]
     M --> G[Schema, evidence, relationship and temporal gates]
     L --> G
     G --> O[Atomic snapshot publication and DuckDB catalog]
@@ -71,6 +73,8 @@ The detailed contracts are in [data_dictionary.md](data_dictionary.md). Conseque
 data/raw/pipeline_recovery/        Ignored API observations, response cache, cursors and collection reports
 data/annotations/patch_verification.jsonl  Audited post-type decisions with exact source evidence
 data/annotations/labels.jsonl      Accepted human annotations, created by import (ignored)
+data/annotations/llm_labels.jsonl  Validated machine annotations, created by LLM import (ignored)
+data/annotations/llm_jobs/         Self-contained LLM batch files, responses and job metadata (ignored)
 data/annotations/queues/           Dataset-specific annotation queues (ignored)
 data/datasets/work/                Rebuildable independent-stage outputs and language cache (ignored)
 data/datasets/snapshots/<id>/      Published immutable Parquet dataset, manifest, report and catalog
@@ -137,7 +141,10 @@ Use `kind="reviews"` for passages or `kind="changes"` for changes. Use `labeled=
 
 Run `uv run --all-extras python examples/explore_dataset.py` for aggregate DuckDB queries, or `examples/load_model_inputs.py` for a batch-loading example. Notebook `03_pipeline_duckdb.ipynb` provides the corresponding walkthrough.
 
-## Annotation handoff
+## Optional human annotation handoff
+
+The default handoff is the [LLM-only labeling route](llm_annotation_workflow.md). It requires no human labels or adjudication and publishes `llm_annotations` and `silver_pairs`. The commands below are for optional human references.
+
 
 ```bash
 uv run --all-extras steam-insights annotations-export --sample-size 100
@@ -176,7 +183,7 @@ uv run --all-extras steam-insights pipeline-validate
 
 Publication checks actual Parquet schemas/hashes, identifiers, source row accounting, foreign keys, exact evidence spans, split allocation, temporal candidate rules and supervised duplicate leakage. SQL date arithmetic explicitly uses UTC, including across daylight-saving transitions. Tests include invalid-record quarantine, failed-publication recovery, model-loading contracts and ambiguous heading context.
 
-The report identifies remaining markup recovery, review-window deficits, uncertain releases/scopes and missing labels. Current inputs support inference/annotation preparation; supervised readiness requires real annotated examples and a separate assessment of label volume, class coverage and agreement. More reviews should be collected around selected patch events rather than by increasing arbitrary per-game quotas.
+The report identifies remaining markup recovery, review-window deficits, uncertain releases/scopes and missing labels. Current inputs support inference/annotation preparation; training can use LLM silver labels without human annotation; assess label volume, class coverage and teacher consistency separately. Human references are needed only for independently validated human accuracy. More reviews should be collected around selected patch events rather than by increasing arbitrary per-game quotas.
 
 ## Primary references behind the design
 

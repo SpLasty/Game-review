@@ -1,5 +1,7 @@
 # Annotation and patch-verification guide
 
+**Human annotation is optional.** The default `prepare-data` handoff now exports self-contained LLM batch files. Use [the LLM-only workflow](../../docs/llm_annotation_workflow.md) to generate, import and train on separate machine silver labels with no human adjudication. The human-specific commands below remain available if reference annotations are obtained later.
+
 Run `steam-insights annotations-export` after preparing a dataset. The printed file under `queues/` contains development examples with blank human fields. Existing queue files are preserved. Never use recommendation votes or rule-derived status hints as gold labels.
 
 ## Review/change annotations

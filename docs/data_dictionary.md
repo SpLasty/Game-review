@@ -499,3 +499,67 @@ Consistent adjudicated labels, excluding cross-split duplicate leakage.
 | `relevance` | `string` |
 | `sentiment` | `string` |
 | `fix_status` | `string` |
+
+## llm_annotations
+
+Validated machine decisions, evidence, model/run/prompt provenance, rationale and self-reported confidence. No human adjudication.
+
+| Field | Arrow type |
+| --- | --- |
+| `annotation_id` | `string` |
+| `candidate_id` | `string` |
+| `annotator_id` | `string` |
+| `label_source` | `string` |
+| `adjudicated` | `bool` |
+| `created_at` | `timestamp[us, tz=UTC]` |
+| `relevance` | `string` |
+| `sentiment` | `string` |
+| `fix_status` | `string` |
+| `review_evidence_start` | `int64` |
+| `review_evidence_end` | `int64` |
+| `review_evidence_text` | `string` |
+| `change_evidence_start` | `int64` |
+| `change_evidence_end` | `int64` |
+| `change_evidence_text` | `string` |
+| `supersedes` | `list<item: string>` |
+| `model_name` | `string` |
+| `run_id` | `string` |
+| `job_id` | `string` |
+| `prompt_version` | `string` |
+| `dataset_id` | `string` |
+| `rationale` | `string` |
+| `confidence` | `double` |
+
+## silver_pairs
+
+Machine-labeled pairs for explicit weak supervision. Uncertain/conflicting decisions and cross-split duplicates excluded; human gold remains separate.
+
+| Field | Arrow type |
+| --- | --- |
+| `candidate_id` | `string` |
+| `review_revision_id` | `string` |
+| `change_id` | `string` |
+| `appid` | `int64` |
+| `task` | `string` |
+| `review_text` | `string` |
+| `review_passage_text` | `string` |
+| `change_text` | `string` |
+| `change_context` | `string` |
+| `title` | `string` |
+| `heading_path` | `list<item: string>` |
+| `review_char_start` | `int64` |
+| `review_char_end` | `int64` |
+| `change_char_start` | `int64` |
+| `change_char_end` | `int64` |
+| `split` | `string` |
+| `cross_split_duplicate` | `bool` |
+| `language_warning` | `bool` |
+| `annotation_id` | `string` |
+| `relevance` | `string` |
+| `sentiment` | `string` |
+| `fix_status` | `string` |
+| `label_source` | `string` |
+| `model_name` | `string` |
+| `run_id` | `string` |
+| `prompt_version` | `string` |
+| `confidence` | `double` |

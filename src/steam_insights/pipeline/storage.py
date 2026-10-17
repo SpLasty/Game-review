@@ -346,6 +346,24 @@ SCHEMAS["labeled_pairs"] = {
     "sentiment": TEXT,
     "fix_status": TEXT,
 }
+SCHEMAS["llm_annotations"] = {
+    **SCHEMAS["annotations"],
+    "model_name": TEXT,
+    "run_id": TEXT,
+    "job_id": TEXT,
+    "prompt_version": TEXT,
+    "dataset_id": TEXT,
+    "rationale": TEXT,
+    "confidence": FLOAT,
+}
+SCHEMAS["silver_pairs"] = {
+    **SCHEMAS["labeled_pairs"],
+    "label_source": TEXT,
+    "model_name": TEXT,
+    "run_id": TEXT,
+    "prompt_version": TEXT,
+    "confidence": FLOAT,
+}
 
 
 def write_table(directory: Path, name: str, records: list[dict], storage: dict) -> dict:

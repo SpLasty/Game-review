@@ -1,19 +1,19 @@
 # Model-ingestion data readiness report
 
-Dataset: `f6ed010d3a378a5a12a4d9e502a41aae540c77b863356eae972189164cec0240`
+Dataset: `f0139aa809f06c9cf88398a10e03acb9a6a14a1e330f930d663aa409c80c0fa7`
 
 ## Processing completed
 
-73,336 current reviews and 3,638 current announcement posts were processed. 32,759 structural change candidates and 27,684 review/change candidates were exported. Candidates and rule hints remain distinct from adjudicated human labels.
+76,861 current reviews and 3,638 current announcement posts were processed. 32,759 structural change candidates and 29,183 review/change candidates were exported. Candidates and rule hints remain distinct from adjudicated human labels.
 
 | Artifact | Rows |
 | --- | --- |
-| source_records | 77,981 |
+| source_records | 83,981 |
 | quarantine | 0 |
-| review_revisions | 73,336 |
-| review_passages | 33,537 |
-| duplicate_pairs | 135 |
-| reviews | 73,336 |
+| review_revisions | 77,104 |
+| review_passages | 34,794 |
+| duplicate_pairs | 149 |
+| reviews | 76,861 |
 | announcement_revisions | 4,635 |
 | announcement_blocks | 108,956 |
 | announcement_links | 2,221 |
@@ -23,12 +23,14 @@ Dataset: `f6ed010d3a378a5a12a4d9e502a41aae540c77b863356eae972189164cec0240`
 | announcements | 3,638 |
 | games | 30 |
 | patch_windows | 1,100 |
-| candidates | 27,684 |
+| candidates | 29,183 |
 | annotations | 0 |
-| model_review_inputs | 33,537 |
+| model_review_inputs | 34,794 |
 | model_change_inputs | 32,759 |
-| model_pair_inputs | 27,684 |
+| model_pair_inputs | 29,183 |
 | labeled_pairs | 0 |
+| llm_annotations | 0 |
+| silver_pairs | 0 |
 
 ## Patch verification and window coverage
 
@@ -47,9 +49,9 @@ The screen uses configured before/after intervals (default 14 days each), at lea
 | Game | Split | Reviews | Eligible | Structured posts | Confirmed patches | Confirmed windows passing |
 | --- | --- | --- | --- | --- | --- | --- |
 | Dota 2 | test | 4199 | 1017 | 0 | 0 | 0 |
-| Counter-Strike 2 | train | 4656 | 1025 | 93 | 3 | 0 |
+| Counter-Strike 2 | train | 6656 | 1491 | 93 | 3 | 0 |
 | Terraria | train | 3000 | 1032 | 0 | 0 | 0 |
-| Project Zomboid | test | 2200 | 1002 | 92 | 31 | 0 |
+| Project Zomboid | test | 2922 | 1338 | 92 | 31 | 0 |
 | Warframe | test | 2300 | 1027 | 0 | 0 | 0 |
 | War Thunder | test | 2600 | 1043 | 0 | 0 | 0 |
 | Path of Exile | test | 2400 | 1047 | 87 | 5 | 0 |
@@ -63,7 +65,7 @@ The screen uses configured before/after intervals (default 14 days each), at lea
 | Factorio | test | 2299 | 1048 | 0 | 0 | 0 |
 | Satisfactory | test | 2100 | 1040 | 100 | 66 | 0 |
 | Deep Rock Galactic | test | 2499 | 1026 | 98 | 26 | 1 |
-| HELLDIVERS 2 | test | 2400 | 1017 | 93 | 37 | 0 |
+| HELLDIVERS 2 | test | 3203 | 1374 | 93 | 37 | 0 |
 | PUBG BATTLEGROUNDS | train | 3299 | 1022 | 0 | 0 | 0 |
 | Hunt Showdown 1896 | validation | 1799 | 1002 | 48 | 11 | 2 |
 | Noita | test | 1900 | 1030 | 0 | 0 | 0 |
@@ -80,16 +82,17 @@ The screen uses configured before/after intervals (default 14 days each), at lea
 ## Model ingestion readiness
 
 - Inference inputs available: **True**.
-- Adjudicated labeled pairs: **0**; supervised training ready: **False**. This flag indicates that some training rows exist, not that label volume, class coverage, or evaluation quality is sufficient.
-- Cross-split duplicate families: **1,053**; affected pairs are excluded from supervised export.
-- Source metadata/independent language-detector disagreements: **479**; retained as inspection flags.
+- Human-adjudicated labeled pairs: **0**; human-labeled training inputs available: **False**. This flag indicates that some training rows exist, not that label volume, class coverage, or evaluation quality is sufficient.
+- LLM annotations: **0**; silver pairs: **0**; machine-supervised training inputs available: **False**. Human annotation is optional. Silver labels are machine supervision; evaluation against them measures teacher agreement, not independently verified accuracy.
+- Cross-split duplicate families: **1,118**; affected pairs are excluded from supervised export.
+- Source metadata/independent language-detector disagreements: **487**; retained as inspection flags.
 
 ## More data and decisions required
 
 - **2,531 posts** still have no original heading/list markup available. Their extracted fragments retain a degraded-source warning.
 - **1,100 patch posts** have no supported effective release timestamp. Publication time is an explicitly marked proxy.
 - Backfill historical review windows where before/after counts or date coverage are insufficient. The window CSV records deficits. Exhausting a dated API query is tracked separately from passing the sample-density screen.
-- Complete human annotations for relevance, change-specific sentiment, and fix-status evidence. A recommendation vote does not supply these labels. Inspect representative parser/verification outputs before using weak hints.
+- For training, generate evidence-backed LLM silver labels with llm-annotations-export/import, or optionally add human labels. A recommendation vote does not supply these labels. Human references would be needed for independently validated accuracy, not to run the pipeline.
 - Historical review and announcement revisions absent from the archive cannot be reconstructed by fetching their current state. Edited reviews and newly recovered posts are current observations, with their observation times preserved.
 - Overlapping patch posts, beta/platform scope, and external full changelog links need source inspection. Unknown review branch/platform never silently becomes a scope match.
 
