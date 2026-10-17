@@ -17,7 +17,7 @@ TEXTS = pa.list_(TEXT)
 
 
 def stable_id(*parts: object) -> str:
-    payload = json.dumps(parts, ensure_ascii=False, separators=(",", ":"), default=str)
+    payload = json.dumps(parts, ensure_ascii=False, separators=(",", ":"), default=str, sort_keys=True)
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
@@ -58,6 +58,100 @@ SCHEMAS = {
     },
 }
 SCHEMAS["reviews"] = SCHEMAS["review_revisions"]
+SCHEMAS.update({
+    "announcement_revisions": {
+        "announcement_revision_id": TEXT, "post_id": TEXT, "appid": INT, "game": TEXT,
+        "title": TEXT, "source_text_original": TEXT, "canonical_text": TEXT,
+        "document_format": TEXT, "structure_available": BOOL, "publication_utc": TIME,
+        "observed_at": TIME, "source_record_id": TEXT, "source_url": TEXT, "feed": TEXT,
+        "legacy_manual_flag": BOOL, "post_type": TEXT, "verification_status": TEXT,
+        "release_status_hint": TEXT, "release_utc": TIME, "release_time_basis": TEXT,
+        "version_hint": TEXT, "branch": TEXT, "platforms": TEXTS, "split": TEXT,
+    },
+    "announcement_blocks": {
+        "block_id": TEXT, "announcement_revision_id": TEXT, "post_id": TEXT, "appid": INT,
+        "ordinal": INT, "block_type": TEXT, "heading_path": TEXTS, "list_depth": INT,
+        "heading_origin": TEXT, "text": TEXT, "char_start": INT, "char_end": INT,
+    },
+    "changes": {
+        "change_id": TEXT, "announcement_revision_id": TEXT, "block_id": TEXT,
+        "post_id": TEXT, "appid": INT, "game": TEXT, "title": TEXT, "heading_path": TEXTS,
+        "text": TEXT, "char_start": INT, "char_end": INT, "context_text": TEXT,
+        "status_hint": TEXT, "topic_hints": TEXTS, "entity_hint": TEXT,
+        "version_hint": TEXT, "branch": TEXT, "platforms": TEXTS,
+        "old_value": TEXT, "new_value": TEXT, "needs_review": BOOL,
+        "extraction_method": TEXT, "source_url": TEXT, "split": TEXT,
+    },
+    "patches": {
+        "patch_id": TEXT, "announcement_revision_id": TEXT, "post_id": TEXT,
+        "appid": INT, "game": TEXT, "title": TEXT, "publication_utc": TIME,
+        "release_utc": TIME, "anchor_utc": TIME, "anchor_basis": TEXT,
+        "verification_status": TEXT, "source_confirmed": BOOL, "human_verified": BOOL,
+        "legacy_manual_flag": BOOL, "verified_for_analysis": BOOL,
+        "version_hint": TEXT, "branch": TEXT, "platforms": TEXTS,
+        "source_url": TEXT, "overlapping_patch_posts": INT, "split": TEXT,
+    },
+    "verification_evidence": {
+        "evidence_id": TEXT, "announcement_revision_id": TEXT,
+        "source_record_id": TEXT, "field": TEXT, "method": TEXT,
+        "value": TEXT, "evidence_text": TEXT, "char_start": INT, "char_end": INT,
+        "source_url": TEXT, "checked_by": TEXT, "checked_at": TIME,
+    },
+})
+SCHEMAS["announcements"] = SCHEMAS["announcement_revisions"]
+SCHEMAS.update({
+    "games": {"appid": INT, "game": TEXT, "split": TEXT},
+    "patch_windows": {
+        "patch_id": TEXT, "appid": INT, "game": TEXT, "title": TEXT,
+        "anchor_utc": TIME, "anchor_basis": TEXT, "window_start_utc": TIME,
+        "window_end_utc": TIME, "pre_reviews": INT, "post_reviews": INT,
+        "pre_eligible_reviews": INT, "post_eligible_reviews": INT,
+        "pre_active_dates": INT, "post_active_dates": INT,
+        "pre_edited_reviews": INT, "post_edited_reviews": INT,
+        "pre_negative_recommendation_share": FLOAT, "post_negative_recommendation_share": FLOAT,
+        "observed_bounds_cover_window": BOOL, "coverage_screen_met": BOOL,
+        "stronger_coverage_screen_met": BOOL, "verified_patch_post": BOOL,
+        "verification_status": TEXT, "overlapping_patch_posts": INT,
+        "pre_reviews_needed_for_screen": INT, "post_reviews_needed_for_screen": INT,
+        "review_collection_complete": BOOL, "assessment": TEXT, "split": TEXT,
+    },
+    "candidates": {
+        "candidate_id": TEXT, "review_revision_id": TEXT, "review_id": TEXT,
+        "change_id": TEXT, "announcement_revision_id": TEXT, "patch_id": TEXT,
+        "appid": INT, "task": TEXT, "lag_days": FLOAT, "shared_terms": TEXTS,
+        "lexical_score": FLOAT, "scope_compatibility": TEXT, "split": TEXT,
+        "cross_split_duplicate": BOOL,
+    },
+    "annotations": {
+        "annotation_id": TEXT, "candidate_id": TEXT, "annotator_id": TEXT,
+        "label_source": TEXT, "adjudicated": BOOL, "created_at": TIME,
+        "relevance": TEXT, "sentiment": TEXT, "fix_status": TEXT,
+        "review_evidence_start": INT, "review_evidence_end": INT, "review_evidence_text": TEXT,
+        "change_evidence_start": INT, "change_evidence_end": INT, "change_evidence_text": TEXT,
+        "supersedes": TEXTS,
+    },
+    "model_review_inputs": {
+        "passage_id": TEXT, "review_revision_id": TEXT, "appid": INT, "text": TEXT,
+        "review_context": TEXT, "char_start": INT, "char_end": INT,
+        "split": TEXT, "cross_split_duplicate": BOOL, "language_warning": BOOL,
+    },
+    "model_change_inputs": {
+        "change_id": TEXT, "announcement_revision_id": TEXT, "appid": INT,
+        "text": TEXT, "context_text": TEXT, "title": TEXT, "heading_path": TEXTS,
+        "char_start": INT, "char_end": INT, "split": TEXT, "needs_review": BOOL,
+    },
+    "model_pair_inputs": {
+        "candidate_id": TEXT, "review_revision_id": TEXT, "change_id": TEXT,
+        "appid": INT, "task": TEXT, "review_text": TEXT, "review_passage_text": TEXT,
+        "change_text": TEXT, "change_context": TEXT, "title": TEXT,
+        "heading_path": TEXTS, "review_char_start": INT, "review_char_end": INT,
+        "change_char_start": INT, "change_char_end": INT,
+        "split": TEXT, "cross_split_duplicate": BOOL, "language_warning": BOOL,
+    },
+})
+SCHEMAS["labeled_pairs"] = {**SCHEMAS["model_pair_inputs"],
+                           "annotation_id": TEXT, "relevance": TEXT,
+                           "sentiment": TEXT, "fix_status": TEXT}
 
 
 def write_table(directory: Path, name: str, records: list[dict], storage: dict) -> dict:

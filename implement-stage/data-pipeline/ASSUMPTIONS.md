@@ -22,6 +22,9 @@
 | P17 | Revisions and raw source recovery | Import original archives when present. Re-fetched content is a new observation with retrieval time; it never substitutes silently for a historical CSV revision. No fabricated historical edits. | semantic | user |
 | P18 | Orchestration and reproducibility | Reusable stage functions and small wrappers with one offline build command; content snapshot identity covers config, sources, annotation inputs and implementation; logs/time outside deterministic payload comparisons. | interface | default |
 | P19 | Model input contract | Tokenizer-independent full passages and context; model-specific tokenization/truncation handled by loader adapter, never destructive preprocessing. Recommendation is not change-specific sentiment. | semantic | user |
+| P20 | Label resolution | Relevant human labels require exact review/change evidence; irrelevant labels require sentiment/fix status not_applicable. Only consistent active adjudicated labels enter supervised exports. Explicit same-candidate supersedes IDs resolve older decisions; conflicts remain excluded. | semantic | default |
+| P21 | Publication coordination | Portable exclusive directory lock, removed on normal exit; interrupted-run lock requires operator inspection/removal. Refuse publication if source/config/code fingerprint changes during the build. | interface | default |
+| P22 | Retrospective vs feedback candidates | Complaint-resolution candidates can use any subsequent announcement change; feedback candidates require a preceding patch post. Publication availability is enforced in feedback matching; historical edits remain an explicit current-snapshot limitation. | semantic | default |
 
 ## Notes
 

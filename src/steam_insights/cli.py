@@ -11,16 +11,28 @@ from steam_insights.data.io import inventory, write_json
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=["inventory", "profile", "preprocess", "quality", "pipeline"])
+    parser.add_argument("command", choices=["inventory", "profile", "preprocess", "quality", "pipeline", "recover-sources", "backfill-reviews"])
     parser.add_argument("--config", type=Path)
     parser.add_argument("--stage", choices=["inventory", "reviews", "announcements", "all"], default="all")
+    parser.add_argument("--refresh", action="store_true", help="Fetch new public observations instead of cached responses")
+    parser.add_argument("--max-requests", type=int, help="Override the bounded online request budget")
     args = parser.parse_args(argv)
     try:
-        if args.command == "pipeline":
+        if args.command in {"pipeline", "recover-sources", "backfill-reviews"}:
             from steam_insights.pipeline.runner import run_pipeline
             from steam_insights.pipeline.settings import load_pipeline_config
 
-            result = run_pipeline(load_pipeline_config(args.config or "configs/pipeline.toml"), args.stage)
+            pipeline_config = load_pipeline_config(args.config or "configs/pipeline.toml")
+            if args.max_requests is not None:
+                if args.max_requests <= 0:
+                    raise ValueError("max-requests must be positive")
+                pipeline_config.values["collection"]["max_requests"] = args.max_requests
+            if args.command == "pipeline":
+                result = run_pipeline(pipeline_config, args.stage)
+            else:
+                from steam_insights.pipeline.sources import backfill_reviews, recover_sources
+                operation = recover_sources if args.command == "recover-sources" else backfill_reviews
+                result = operation(pipeline_config, refresh=args.refresh)
             print(json.dumps(result, indent=2, default=str))
             return 0
         config = load_config(args.config or "configs/data.toml")
