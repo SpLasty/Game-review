@@ -16,6 +16,7 @@ class DataConfig:
     announcements_file: str
     minimum_words: int = 10
     language: str = "english"
+    quality_dir: Path | None = None
 
     def source(self, kind: str) -> Path:
         names = {
@@ -32,14 +33,21 @@ def load_config(path: str | Path = "configs/data.toml") -> DataConfig:
         values = tomllib.load(handle)
     root = (path.parent / values["project"]["root"]).resolve()
     paths = {key: (root / value).resolve() for key, value in values["paths"].items()}
-    for output in (paths["interim_dir"], paths["reports_dir"]):
+    output_paths = [paths["interim_dir"], paths["reports_dir"]]
+    quality_dir = paths.get("quality_dir", root / "reports" / "data_quality")
+    output_paths.append(quality_dir)
+    for output in output_paths:
         source = paths["source_dir"]
         if output.is_relative_to(source) or source.is_relative_to(output):
             raise ValueError("Output directories must be separate from the source directory")
-    if paths["interim_dir"].is_relative_to(paths["reports_dir"]) or paths[
-        "reports_dir"
-    ].is_relative_to(paths["interim_dir"]):
-        raise ValueError("Interim and report directories must be separate")
+    for index, output in enumerate(output_paths):
+        if any(
+            output.is_relative_to(other) or other.is_relative_to(output)
+            for other in output_paths[index + 1 :]
+        ):
+            raise ValueError(
+                "Interim, exploration, and data-quality output directories must be separate"
+            )
     policy = values.get("preprocessing", {})
     minimum = policy.get("minimum_words", 10)
     if isinstance(minimum, bool) or not isinstance(minimum, int) or minimum < 1:

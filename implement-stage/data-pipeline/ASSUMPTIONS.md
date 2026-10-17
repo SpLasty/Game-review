@@ -25,6 +25,8 @@
 | P20 | Label resolution | Relevant human labels require exact review/change evidence; irrelevant labels require sentiment/fix status not_applicable. Only consistent active adjudicated labels enter supervised exports. Explicit same-candidate supersedes IDs resolve older decisions; conflicts remain excluded. | semantic | default |
 | P21 | Publication coordination | Portable exclusive directory lock, removed on normal exit; interrupted-run lock requires operator inspection/removal. Refuse publication if source/config/code fingerprint changes during the build. | interface | default |
 | P22 | Retrospective vs feedback candidates | Complaint-resolution candidates can use any subsequent announcement change; feedback candidates require a preceding patch post. Publication availability is enforced in feedback matching; historical edits remain an explicit current-snapshot limitation. | semantic | default |
+| P23 | External changelog references | Preserve outgoing link targets and Steam redirect destinations; external domains require confirmation before adding a fetch adapter. No automatic broad web crawl. | interface | default |
+| P24 | One-command preparation | prepare-data is offline by default; --online shares the configured total HTTP request budget across recovery/backfill. Page caps apply per invocation so later runs resume. Backfill prioritizes insufficient fully elapsed windows, retaining future periods as gaps. | interface | default |
 
 ## Notes
 

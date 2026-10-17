@@ -11,14 +11,58 @@ from steam_insights.data.io import inventory, write_json
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=["inventory", "profile", "preprocess", "quality", "pipeline", "recover-sources", "backfill-reviews"])
+    parser.add_argument(
+        "command",
+        choices=[
+            "inventory",
+            "profile",
+            "preprocess",
+            "quality",
+            "pipeline",
+            "prepare-data",
+            "recover-sources",
+            "backfill-reviews",
+            "pipeline-validate",
+            "annotations-export",
+            "annotations-import",
+        ],
+    )
     parser.add_argument("--config", type=Path)
-    parser.add_argument("--stage", choices=["inventory", "reviews", "announcements", "all"], default="all")
-    parser.add_argument("--refresh", action="store_true", help="Fetch new public observations instead of cached responses")
-    parser.add_argument("--max-requests", type=int, help="Override the bounded online request budget")
+    parser.add_argument(
+        "--stage", choices=["inventory", "reviews", "announcements", "all"], default="all"
+    )
+    parser.add_argument(
+        "--refresh",
+        action="store_true",
+        help="Fetch new public observations instead of cached responses",
+    )
+    parser.add_argument(
+        "--online",
+        action="store_true",
+        help="Recover public sources and backfill reviews before processing",
+    )
+    parser.add_argument(
+        "--max-requests", type=int, help="Override the bounded online request budget"
+    )
+    parser.add_argument("--input", type=Path, help="Completed human annotation JSONL")
+    parser.add_argument("--output", type=Path, help="Annotation queue output JSONL")
+    parser.add_argument("--sample-size", type=int, default=100)
+    parser.add_argument(
+        "--split",
+        choices=["development", "train", "validation", "test", "all"],
+        default="development",
+    )
     args = parser.parse_args(argv)
     try:
-        if args.command in {"pipeline", "recover-sources", "backfill-reviews"}:
+        if args.command in {
+            "pipeline",
+            "prepare-data",
+            "recover-sources",
+            "backfill-reviews",
+            "pipeline-validate",
+            "annotations-export",
+            "annotations-import",
+        }:
             from steam_insights.pipeline.runner import run_pipeline
             from steam_insights.pipeline.settings import load_pipeline_config
 
@@ -27,12 +71,28 @@ def main(argv: list[str] | None = None) -> int:
                 if args.max_requests <= 0:
                     raise ValueError("max-requests must be positive")
                 pipeline_config.values["collection"]["max_requests"] = args.max_requests
-            if args.command == "pipeline":
+            if args.command == "prepare-data":
+                from steam_insights.pipeline.orchestration import prepare_data
+
+                result = prepare_data(
+                    pipeline_config,
+                    online=args.online,
+                    refresh=args.refresh,
+                    sample_size=args.sample_size,
+                )
+            elif args.command == "pipeline":
                 result = run_pipeline(pipeline_config, args.stage)
-            else:
+            elif args.command in {"recover-sources", "backfill-reviews"}:
                 from steam_insights.pipeline.sources import backfill_reviews, recover_sources
-                operation = recover_sources if args.command == "recover-sources" else backfill_reviews
+
+                operation = (
+                    recover_sources if args.command == "recover-sources" else backfill_reviews
+                )
                 result = operation(pipeline_config, refresh=args.refresh)
+            else:
+                from steam_insights.pipeline.commands import annotation_or_validation_command
+
+                result = annotation_or_validation_command(pipeline_config, args)
             print(json.dumps(result, indent=2, default=str))
             return 0
         config = load_config(args.config or "configs/data.toml")
@@ -54,7 +114,9 @@ def main(argv: list[str] | None = None) -> int:
 
             result = generate_quality_report(config)
             print(f"Data-quality report: {result['report']}")
-            print(f"Patch-window table: {result['patch_windows']} ({result['patch_window_count']:,} rows)")
+            print(
+                f"Patch-window table: {result['patch_windows']} ({result['patch_window_count']:,} rows)"
+            )
             validation = json.loads(
                 (config.reports_dir / "profile.json").read_text(encoding="utf-8")
             )["validation"]

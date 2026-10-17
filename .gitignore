@@ -14,6 +14,8 @@ dist/
 data/interim/
 data/datasets/
 data/raw/pipeline_recovery/
+data/annotations/*.jsonl
+data/annotations/queues/
 reports/data_exploration/
 .matplotlib/
 .qodo/

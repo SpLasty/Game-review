@@ -6,6 +6,7 @@ root = ".."
 source_dir = "data/processed/steam_30_games"
 interim_dir = "data/interim/steam_30_games"
 reports_dir = "reports/data_exploration"
+quality_dir = "reports/data_quality"
 
 [files]
 reviews = "all_english_reviews.csv"

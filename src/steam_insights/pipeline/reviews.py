@@ -18,7 +18,7 @@ def text_spans(text: str, maximum: int) -> list[tuple[int, int]]:
     boundaries = [0]
     abbreviations = {"mr.", "mrs.", "dr.", "e.g.", "i.e.", "vs.", "etc."}
     for match in re.finditer(r"\n+|(?<=[.!?])\s+(?=[A-Z\"“])", text):
-        last = text[:match.start()].split()[-1:] or [""]
+        last = text[: match.start()].split()[-1:] or [""]
         if last[0].lower() not in abbreviations:
             boundaries.append(match.end())
     boundaries.append(len(text))
@@ -54,25 +54,29 @@ def _near_duplicates(rows: list[dict], settings: dict) -> tuple[list[dict], dict
             representatives.setdefault(row["exact_duplicate_group"], row)
     buckets = defaultdict(list)
     parent = {key: key for key in representatives}
+
     def root(key):
         while parent[key] != key:
             parent[key] = parent[parent[key]]
             key = parent[key]
         return key
+
     pairs = []
     saturated = 0
     for key, row in sorted(representatives.items()):
         terms = re.findall(r"\w+", row["review_text"].casefold())
-        shingles = {" ".join(terms[i:i + 3]) for i in range(max(1, len(terms) - 2))}
+        shingles = {" ".join(terms[i : i + 3]) for i in range(max(1, len(terms) - 2))}
         hashes = [int.from_bytes(hashlib.sha256(s.encode()).digest()[:8], "big") for s in shingles]
         bits = np.unpackbits(np.array(hashes, dtype=">u8").view(np.uint8)).reshape(-1, 64)
-        signature = int.from_bytes(np.packbits(bits.sum(axis=0) * 2 >= len(hashes)).tobytes(), "big")
+        signature = int.from_bytes(
+            np.packbits(bits.sum(axis=0) * 2 >= len(hashes)).tobytes(), "big"
+        )
         candidate_keys = set()
         for band in range(4):
             bucket = buckets[(band, (signature >> (16 * band)) & 65535)]
             if len(bucket) >= settings["near_duplicate_bucket_limit"]:
                 saturated += 1
-            candidate_keys.update(bucket[:settings["near_duplicate_bucket_limit"]])
+            candidate_keys.update(bucket[: settings["near_duplicate_bucket_limit"]])
             bucket.append((key, signature))
         for other_key, other_signature in sorted(candidate_keys):
             if (signature ^ other_signature).bit_count() > 3:
@@ -85,18 +89,30 @@ def _near_duplicates(rows: list[dict], settings: dict) -> tuple[list[dict], dict
             if similarity >= settings["near_duplicate_similarity"]:
                 first, second = sorted([root(key), root(other_key)])
                 parent[second] = first
-                pairs.append({"left_revision_id": row["review_revision_id"],
-                              "right_revision_id": other["review_revision_id"],
-                              "similarity": similarity, "method": "simhash64_hamming3_sequence_ratio"})
+                pairs.append(
+                    {
+                        "left_revision_id": row["review_revision_id"],
+                        "right_revision_id": other["review_revision_id"],
+                        "similarity": similarity,
+                        "method": "simhash64_hamming3_sequence_ratio",
+                    }
+                )
     families = defaultdict(list)
     for key in representatives:
         families[root(key)].append(key)
-    mapping = {member: stable_id("near_duplicate", sorted(members))
-               for members in families.values() if len(members) > 1 for member in members}
+    mapping = {
+        member: stable_id("near_duplicate", sorted(members))
+        for members in families.values()
+        if len(members) > 1
+        for member in members
+    }
     for row in rows:
         row["near_duplicate_group"] = mapping.get(row["exact_duplicate_group"])
-    return pairs, {"near_duplicate_pairs": len(pairs), "saturated_bucket_visits": saturated,
-                   "near_duplicate_detection_exhaustive": False}
+    return pairs, {
+        "near_duplicate_pairs": len(pairs),
+        "saturated_bucket_visits": saturated,
+        "near_duplicate_detection_exhaustive": False,
+    }
 
 
 def prepare_review_observations(observations: list[dict], config) -> dict:
@@ -104,6 +120,7 @@ def prepare_review_observations(observations: list[dict], config) -> dict:
     cache_path = config.work_dir / "language_cache.json"
     cache = json.loads(cache_path.read_text()) if cache_path.exists() else {}
     from langdetect import DetectorFactory, LangDetectException, detect_langs
+
     DetectorFactory.seed = 0
     revisions, sources, quarantine = {}, [], []
     payloads = {}
@@ -137,6 +154,28 @@ def prepare_review_observations(observations: list[dict], config) -> dict:
             for optional in ("unedited", "steam_purchase", "refunded", "primarily_steam_deck"):
                 if optional in source_row:
                     explicit_bool(source_row[optional])
+            if source_row.get("unedited") not in (None, "") and explicit_bool(
+                source_row["unedited"]
+            ) != (created == updated):
+                raise ValueError("unedited flag disagrees with timestamps")
+            supplied = source_row.get("word_count")
+            if supplied not in (None, ""):
+                numeric = float(supplied)
+                if not numeric.is_integer() or numeric < 0:
+                    raise ValueError("invalid supplied word count")
+                supplied = int(numeric)
+            else:
+                supplied = None
+            flags = {
+                key: explicit_bool(source_row.get(key))
+                for key in (
+                    "steam_purchase",
+                    "received_for_free",
+                    "refunded",
+                    "primarily_steam_deck",
+                    "written_during_early_access",
+                )
+            }
             playtime = optional_float(source_row.get("playtime_at_review_hours"))
             lifetime = optional_float(source_row.get("lifetime_playtime_hours"))
         except (ValueError, TypeError, KeyError, OverflowError, OSError) as exc:
@@ -167,28 +206,73 @@ def prepare_review_observations(observations: list[dict], config) -> dict:
                     cache[key] = [None, None]
             detected, probability = cache[key]
         eligible = language == settings["language"] and words >= settings["minimum_words"]
-        eligibility = "eligible" if eligible else "source_language" if language != settings["language"] else "short_or_empty_text"
+        eligibility = (
+            "eligible"
+            if eligible
+            else "source_language"
+            if language != settings["language"]
+            else "short_or_empty_text"
+        )
         row = {
-            "review_revision_id": revision_id, "review_id": review_id, "appid": appid,
-            "game": source_row["game"], "review_text_original": original, "review_text": canonical,
-            "language": language, "created_utc": created, "updated_utc": updated,
-            "observed_at": observed, "recommended": vote, "source_record_id": source["source_record_id"],
-            "source_url": source["source_url"], "author_hash": source_row.get("author_hash") or None,
+            "review_revision_id": revision_id,
+            "review_id": review_id,
+            "appid": appid,
+            "game": source_row["game"],
+            "review_text_original": original,
+            "review_text": canonical,
+            "language": language,
+            "created_utc": created,
+            "updated_utc": updated,
+            "observed_at": observed,
+            "recommended": vote,
+            "source_record_id": source["source_record_id"],
+            "source_url": source["source_url"],
+            "author_hash": source_row.get("author_hash") or None,
             "author_hash_namespace": source_row.get("author_hash_namespace") or "legacy_collector",
-            "playtime_at_review_hours": playtime, "lifetime_playtime_hours": lifetime,
-            "word_count": words, "text_eligible": eligible, "text_eligibility_reason": eligibility,
-            "edited": created != updated, "detected_language": detected, "language_probability": probability,
-            "language_warning": bool(detected and detected != "en" and probability >= settings["language_warning_probability"]),
-            "exact_duplicate_group": stable_id("exact_text_v1", " ".join(canonical.casefold().split())) if canonical else None,
-            "near_duplicate_group": None, "split": None, "cross_split_duplicate": False,
+            "playtime_at_review_hours": playtime,
+            "lifetime_playtime_hours": lifetime,
+            **flags,
+            "supplied_word_count": supplied,
+            "word_count_mismatch": supplied is not None and supplied != words,
+            "word_count": words,
+            "text_eligible": eligible,
+            "text_eligibility_reason": eligibility,
+            "edited": created != updated,
+            "detected_language": detected,
+            "language_probability": probability,
+            "language_warning": bool(
+                detected
+                and detected != "en"
+                and probability >= settings["language_warning_probability"]
+            ),
+            "exact_duplicate_group": stable_id(
+                "exact_text_v1", " ".join(canonical.casefold().split())
+            )
+            if canonical
+            else None,
+            "near_duplicate_group": None,
+            "split": None,
+            "cross_split_duplicate": False,
         }
         previous = revisions.get(revision_id)
-        if previous is None or (observed is not None and (previous["observed_at"] is None or observed > previous["observed_at"])):
+        if previous is None or (
+            observed is not None
+            and (previous["observed_at"] is None or observed > previous["observed_at"])
+        ):
             revisions[revision_id] = row
     write_json(cache_path, cache)
     if not revisions:
         raise ValueError("No valid reviews remain; dataset publication stopped")
-    rows = sorted(revisions.values(), key=lambda r: (r["appid"], r["created_utc"], r["review_id"], r["updated_utc"], r["review_revision_id"]))
+    rows = sorted(
+        revisions.values(),
+        key=lambda r: (
+            r["appid"],
+            r["created_utc"],
+            r["review_id"],
+            r["updated_utc"],
+            r["review_revision_id"],
+        ),
+    )
     current = {}
     for row in rows:
         key = (row["appid"], row["review_id"])
@@ -199,15 +283,40 @@ def prepare_review_observations(observations: list[dict], config) -> dict:
     passages = []
     for row in latest:
         if row["text_eligible"]:
-            for ordinal, (start, end) in enumerate(text_spans(row["review_text"], settings["passage_max_chars"])):
-                passages.append({"passage_id": stable_id("passage_v1", row["review_revision_id"], start, end),
-                                 "review_revision_id": row["review_revision_id"], "review_id": row["review_id"],
-                                 "appid": row["appid"], "ordinal": ordinal,
-                                 "char_start": start, "char_end": end, "text": row["review_text"][start:end], "split": None})
-    return {"reviews": latest, "review_revisions": rows, "review_passages": passages,
-            "source_records": sources, "quarantine": quarantine, "duplicate_pairs": duplicates,
-            "stats": {"source_rows": len(observations), "valid_source_rows": len(sources) - len(quarantine),
-                      "quarantined_rows": len(quarantine), "unique_revisions": len(rows),
-                      "current_reviews": len(latest), "repeated_observations": len(sources) - len(quarantine) - len(rows),
-                      "language_warnings": sum(r["language_warning"] for r in latest),
-                      "quarantine_reasons": dict(reasons), **duplicate_stats}}
+            for ordinal, (start, end) in enumerate(
+                text_spans(row["review_text"], settings["passage_max_chars"])
+            ):
+                passages.append(
+                    {
+                        "passage_id": stable_id(
+                            "passage_v1", row["review_revision_id"], start, end
+                        ),
+                        "review_revision_id": row["review_revision_id"],
+                        "review_id": row["review_id"],
+                        "appid": row["appid"],
+                        "ordinal": ordinal,
+                        "char_start": start,
+                        "char_end": end,
+                        "text": row["review_text"][start:end],
+                        "split": None,
+                    }
+                )
+    return {
+        "reviews": latest,
+        "review_revisions": rows,
+        "review_passages": passages,
+        "source_records": sources,
+        "quarantine": quarantine,
+        "duplicate_pairs": duplicates,
+        "stats": {
+            "source_rows": len(observations),
+            "valid_source_rows": len(sources) - len(quarantine),
+            "quarantined_rows": len(quarantine),
+            "unique_revisions": len(rows),
+            "current_reviews": len(latest),
+            "repeated_observations": len(sources) - len(quarantine) - len(rows),
+            "language_warnings": sum(r["language_warning"] for r in latest),
+            "quarantine_reasons": dict(reasons),
+            **duplicate_stats,
+        },
+    }

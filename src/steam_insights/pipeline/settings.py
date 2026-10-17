@@ -40,10 +40,27 @@ def load_pipeline_config(path: str | Path = "configs/pipeline.toml") -> Pipeline
         raise ValueError("Dataset and quality outputs must be separate")
     for section, names in {
         "reviews": ["minimum_words", "passage_max_chars", "near_duplicate_bucket_limit"],
-        "windows": ["days_before", "days_after", "minimum_reviews", "minimum_review_dates", "stronger_minimum_reviews"],
-        "candidates": ["feedback_days", "resolution_days", "minimum_shared_terms", "max_per_review_per_task"],
+        "windows": [
+            "days_before",
+            "days_after",
+            "minimum_reviews",
+            "minimum_review_dates",
+            "stronger_minimum_reviews",
+        ],
+        "candidates": [
+            "feedback_days",
+            "resolution_days",
+            "minimum_shared_terms",
+            "max_per_review_per_task",
+        ],
         "storage": ["row_group_size"],
-        "collection": ["max_requests", "news_pages_per_game", "review_pages_per_window", "max_patch_windows", "timeout_seconds"],
+        "collection": [
+            "max_requests",
+            "news_pages_per_game",
+            "review_pages_per_window",
+            "max_patch_windows",
+            "timeout_seconds",
+        ],
     }.items():
         for name in names:
             value = values[section][name]
