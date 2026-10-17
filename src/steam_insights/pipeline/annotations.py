@@ -204,6 +204,8 @@ def export_annotation_queue(
             "note": "An existing queue may contain human work; use a new output filename for another sample.",
         }
     pairs = read_table(directory, "model_pair_inputs")
+    candidate_map = {r["candidate_id"]: r for r in read_table(directory, "candidates")}
+    documents = {r["announcement_revision_id"]: r for r in read_table(directory, "announcements")}
     groups = defaultdict(list)
     for row in pairs:
         if row["split"] in splits and not row["cross_split_duplicate"]:
@@ -218,8 +220,14 @@ def export_annotation_queue(
     output.parent.mkdir(parents=True, exist_ok=True)
     with output.open("w", encoding="utf-8") as handle:
         for row in selected:
+            candidate = candidate_map[row["candidate_id"]]
+            document = documents[candidate["announcement_revision_id"]]
             template = {
                 **row,
+                "announcement_revision_id": document["announcement_revision_id"],
+                "announcement_text": document["canonical_text"],
+                "post_id": document["post_id"],
+                "source_url": document["source_url"],
                 "annotator_id": "",
                 "label_source": "human",
                 "adjudicated": False,

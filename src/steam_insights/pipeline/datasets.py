@@ -112,8 +112,9 @@ def build_windows(
             and min(r["created_utc"] for r in game_reviews) <= start
             and max(r["created_utc"] for r in game_reviews) >= end
         )
+        complete_query = {("pre", start, at), ("post", at, end)} <= completed[patch["patch_id"]]
         enough = (
-            full
+            (full or complete_query)
             and min(len(pre_text), len(post_text)) >= settings["minimum_reviews"]
             and min(pre_dates, post_dates) >= settings["minimum_review_dates"]
         )
@@ -159,6 +160,11 @@ def build_windows(
                 if after
                 else None,
                 "observed_bounds_cover_window": full,
+                "window_coverage_evidence": "exhausted_dated_api_queries"
+                if complete_query
+                else "observed_date_bounds_proxy"
+                if full
+                else "insufficient_coverage_evidence",
                 "coverage_screen_met": enough,
                 "stronger_coverage_screen_met": stronger,
                 "verified_patch_post": patch["verified_for_analysis"],
@@ -170,8 +176,7 @@ def build_windows(
                 "post_reviews_needed_for_screen": max(
                     settings["minimum_reviews"] - len(post_text), 0
                 ),
-                "review_collection_complete": {("pre", start, at), ("post", at, end)}
-                <= completed[patch["patch_id"]],
+                "review_collection_complete": complete_query,
                 "assessment": status,
                 "split": patch["split"],
             }

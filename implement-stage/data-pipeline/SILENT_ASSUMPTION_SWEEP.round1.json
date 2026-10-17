@@ -1,0 +1,56 @@
+{
+  "undeclared": [
+    {
+      "site": "src/steam_insights/pipeline/annotations.py:209",
+      "decision": "Annotation queues use deterministic hash ordering within each game/task/split group and round-robin sampling across groups.",
+      "why_it_matters": "This defines a balanced annotation population rather than a sample proportional to candidate frequency. The ledger does not declare that sampling choice.",
+      "class": "semantic"
+    },
+    {
+      "site": "src/steam_insights/pipeline/datasets.py:model_exports",
+      "decision": "Each pair selects one review passage with the most shared retrieval terms; ties select the earliest passage. Full review text is also retained.",
+      "why_it_matters": "This determines the default passage presented to downstream models. P19 declares preservation of passages and context but not this selection rule.",
+      "class": "semantic"
+    },
+    {
+      "site": "src/steam_insights/pipeline/documents.py:283",
+      "decision": "Announcements classified as promotion or event are excluded from change extraction entirely.",
+      "why_it_matters": "Mixed announcements containing substantive changes produce no change candidates when assigned either type. P08 does not declare this population exclusion.",
+      "class": "semantic"
+    },
+    {
+      "site": "src/steam_insights/pipeline/annotations.py:191",
+      "decision": "supervised_training_ready becomes true when at least one accepted training pair exists.",
+      "why_it_matters": "This is an availability flag without label-volume or class-coverage requirements. Reporting explains the limitation, but P13 does not declare the threshold.",
+      "class": "semantic"
+    }
+  ],
+  "stale_rows": [
+    {
+      "row": "P08",
+      "site": "src/steam_insights/pipeline/documents.py:extract_changes/status_hint",
+      "decision": "Originally, status inference omitted the announcement title; the workaround pattern also excluded plural 'Workarounds'.",
+      "why_it_matters": "A fragment saying 'Fixed ...' could receive released_fix_claim despite a planned, known-issue, or workaround scope.",
+      "class": "semantic",
+      "state": "Observed before correction. Parent reports correction and P27 documentation; final re-sweep pending."
+    },
+    {
+      "row": "P18",
+      "site": "src/steam_insights/pipeline/ingestion.py:source_files; src/steam_insights/pipeline/runner.py:fingerprint",
+      "decision": "Originally, snapshot identity hashed complete collection reports, including generated_at_utc and request diagnostics.",
+      "why_it_matters": "Cached online reruns could create new dataset and annotation-queue identities without changing source observations or coverage evidence.",
+      "class": "interface",
+      "state": "Observed before correction. Parent reports correction and P28 documentation; final re-sweep pending."
+    },
+    {
+      "row": "P06",
+      "site": "src/steam_insights/pipeline/announcements.py:115",
+      "decision": "Originally, conflicting announcement bodies with identical observation time and structure quality were resolved by revision-hash ordering.",
+      "why_it_matters": "An in-memory example accepted both conflicting revisions and silently selected one as current, contrary to the declared failure policy.",
+      "class": "semantic",
+      "state": "Reproduced before correction. Parent reports correction and P29 documentation; final re-sweep pending."
+    }
+  ],
+  "semantic_undeclared": 4,
+  "verdict": "gaps"
+}

@@ -84,12 +84,50 @@ class DocumentTests(unittest.TestCase):
         self.assertEqual(status_hint("This will be fixed next week."), "planned")
         self.assertEqual(status_hint("Fixed terminal bug", "Known Issues"), "known_issue")
 
+    def test_document_title_constrains_isolated_fix_claims(self):
+        for title, expected in [
+            ("Known Issues", "known_issue"),
+            ("Planned changes", "planned"),
+            ("Workarounds", "workaround"),
+        ]:
+            with self.subTest(title=title):
+                result = prepare_announcement_observations(
+                    [
+                        news_fixture(
+                            title=title, contents="[list][*]Fixed terminal crashes.[/*][/list]"
+                        )
+                    ],
+                    self.config,
+                )
+                self.assertEqual(result["changes"][0]["status_hint"], expected)
+
+    def test_ambiguous_same_time_announcement_revisions_fail_publication(self):
+        first = news_fixture(observed_at="2024-01-02T00:00:00Z")
+        second = news_fixture(
+            observed_at="2024-01-02T00:00:00Z",
+            contents="[list][*]Fixed different crashes.[/*][/list]",
+        )
+        with self.assertRaisesRegex(ValueError, "Conflicting announcement revisions"):
+            prepare_announcement_observations([first, second], self.config)
+
     def test_sale_is_not_a_patch_and_missing_body_is_preserved(self):
         result = prepare_announcement_observations(
             [news_fixture(title="Winter sale", contents="Discounts now available")], self.config
         )
         self.assertEqual(result["announcements"][0]["post_type"], "promotion")
         self.assertEqual(result["patches"], [])
+
+    def test_valve_image_attributes_and_explicit_list_closers_are_not_model_text(self):
+        canonical, blocks, _, _ = parse_document(
+            '[img src="{STEAM_CLAN_IMAGE}/example.jpg"][/img]'
+            "[h2]Fixes[/h2][list][*]Fixed crashes.[/*][*]Added options.[/*][/list]"
+            "[table equalcells=1][tr][td]Damage changed[/td][td]2 -> 3[/td][/tr][/table]"
+        )
+        self.assertNotIn("[/*]", canonical)
+        self.assertNotIn("[img", canonical)
+        self.assertNotIn("example.jpg", canonical)
+        self.assertEqual(sum(b["block_type"] == "list_item" for b in blocks), 2)
+        self.assertTrue(any(b["block_type"] == "table_row" for b in blocks))
 
 
 class CollectionTests(unittest.TestCase):

@@ -53,7 +53,8 @@ def write_readiness_report(directory, manifest, reviews, announcements, games, w
         "The legacy ten manual flags are preserved separately. Source confirmation establishes post type; fix effectiveness and actual deployment remain separate questions.",
         "",
         "The screen uses configured before/after intervals (default 14 days each), at least 30 text-eligible reviews across at least 7 UTC dates per side, "
-        "and observed review bounds spanning the entire interval. A 14-day interval beginning midday can intersect 15 UTC calendar dates. "
+        "and either observed review bounds spanning the entire interval or fully exhausted dated API queries on both sides. "
+        "API completion is stronger evidence than observed-date bounds and is recorded separately. A 14-day interval beginning midday can intersect 15 UTC calendar dates. "
         "These are operational availability thresholds, not statistical-power or causal criteria.",
         "",
         "## Per-game readiness",

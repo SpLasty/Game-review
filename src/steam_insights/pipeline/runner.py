@@ -80,7 +80,12 @@ def fingerprint(config):
     implementation = [
         info(path) for path in sorted((config.root / "src" / "steam_insights").rglob("*.py"))
     ]
-    for path in (config.path, config.input("data_config"), config.root / "uv.lock"):
+    for path in (
+        config.path,
+        config.input("data_config"),
+        config.root / "uv.lock",
+        config.root / "pyproject.toml",
+    ):
         if path.exists():
             implementation.append(info(path))
     value = {
@@ -89,6 +94,16 @@ def fingerprint(config):
         "configuration": config.values,
         "pipeline_version": PIPELINE_VERSION,
     }
+    # Operational report rewrites must not churn snapshots or annotation queue IDs.
+    report = config.input("recovery_dir") / "review_backfill_report.json"
+    windows = json.loads(report.read_text()).get("windows", []) if report.exists() else []
+    value["completed_collection_queries"] = sorted(
+        {
+            (w["patch_id"], w["side"], w["start_utc"], w["end_utc"])
+            for w in windows
+            if w["complete_as_of_fetch"]
+        }
+    )
     return stable_id("steam_model_dataset_v1", value), value
 
 

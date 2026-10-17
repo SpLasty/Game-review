@@ -21,7 +21,7 @@ ACTION = re.compile(
 
 def _bbcode_html(source: str) -> str:
     text = html.escape(source, quote=False)
-    text = re.sub(r"\[img(?:=[^]]*)?\].*?\[/img\]", "", text, flags=re.I | re.S)
+    text = re.sub(r"\[img(?:[=\s][^]]*)?\].*?\[/img\]", "", text, flags=re.I | re.S)
     text = re.sub(
         r"\[(?:previewyoutube|previewyoutubeid)=[^]]*\].*?\[/(?:previewyoutube|previewyoutubeid)\]",
         "",
@@ -48,8 +48,9 @@ def _bbcode_html(source: str) -> str:
         "code": "pre",
         "quote": "blockquote",
     }.items():
-        text = re.sub(rf"\[{bb}(?:=[^]]*)?\]", f"<{tag}>", text, flags=re.I)
+        text = re.sub(rf"\[{bb}(?:[=\s][^]]*)?\]", f"<{tag}>", text, flags=re.I)
         text = re.sub(rf"\[/{bb}\]", f"</{tag}>", text, flags=re.I)
+    text = re.sub(r"\[/\*\]", "</li>", text)
     text = re.sub(r"\[\*\]", "</li><li>", text)
     text = re.sub(r"\[br\]", "<br>", text, flags=re.I)
     return text
@@ -266,7 +267,7 @@ def status_hint(text: str, context: str = "") -> str:
         re.I,
     ):
         return "planned"
-    if re.search(r"\bworkaround\b", combined, re.I):
+    if re.search(r"\bworkarounds?\b", combined, re.I):
         return "workaround"
     if re.search(r"\b(?:partial|partially|some instances|not all)\b", combined, re.I):
         return "partial_fix"
@@ -309,8 +310,8 @@ def extract_changes(document: dict, blocks: list[dict]) -> list[dict]:
             if values
             else (None, None)
         )
-        hint = status_hint(text, context)
         scope = document["title"] + " " + context
+        hint = status_hint(text, scope)
         branch = branch_hint(context) or document["branch"]
         changes.append(
             {

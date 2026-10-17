@@ -1,14 +1,15 @@
 # Initial data workflow
 
-This is the first implementation slice of the architecture: understand the existing snapshot, validate its meaning, and prepare typed data. It does not train a model or claim that a patch caused a change in sentiment.
+This guide covers the original CSV exploration commands. For the complete implemented workflow, including source recovery, structured documents, candidate matching, annotations and model inputs, see [data_pipeline.md](data_pipeline.md). Neither workflow trains a model or establishes patch causality.
 
 ## Run order
 
 1. `uv sync --locked --extra dev` creates the local environment from the committed lockfile.
 2. `uv run steam-insights inventory` records source filenames, sizes, columns, row counts, and SHA-256 fingerprints.
-3. `uv run steam-insights profile` validates the source tables and produces exploratory tables/plots. Inspect its generated README and `profile.json` before modeling.
-4. `uv run steam-insights preprocess` writes a typed snapshot to the separate interim directory. It fails if required data is invalid; warnings such as empty text do not remove a valid recommendation.
-5. `uv run python -m unittest discover -s tests -v` runs collector and data checks. `uv run python scripts/check_data_foundation.py` executes the notebook cells and verifies real outputs.
+3. `uv run steam-insights profile` validates the source tables and produces exploratory tables/plots.
+4. `uv run steam-insights quality` refreshes the profile and writes a combined data-quality report, per-game summary, and patch-window table under `reports/data_quality/`.
+5. `uv run steam-insights preprocess` writes a typed snapshot to the separate interim directory. It fails if required data is invalid; warnings such as empty text do not remove a valid recommendation.
+6. `uv run python -m unittest discover -s tests -v` runs collector and data checks. `uv run python scripts/check_data_foundation.py` executes the notebook cells and verifies real outputs.
 
 All commands run from the project root. `python -m steam_insights profile` is an equivalent module entry point after installation. No credentials or internet access are needed after dependencies are installed.
 
@@ -24,8 +25,12 @@ All commands run from the project root. `python -m steam_insights profile` is an
 | `announcements_by_game.csv` | Which games have sparse or capped announcement history? |
 | `profile.json` | Are IDs/timestamps/booleans valid? What are the existing verification/branch flags? |
 | `figures/*.png` | Visualize game volume, lengths, population differences and the calendar coverage matrix. |
+| `data_quality/data_quality_report.md` | What source quality checks passed, and which patch-post windows have enough observed text reviews? |
+| `data_quality/patch_window_quality.csv` | Per candidate/verified post, what are the pre/post review counts, active dates, and coverage assessment? |
 
 Counts describe the observed convenience sample, not all Steam users. A zero in the heatmap means no saved observation on that day; neither zero nor a nonzero count establishes complete API coverage. The legacy ten-word selection and a configurable new threshold are separate policies.
+
+The patch-window report uses the full review export and a symmetric 14-day window around announcement publication time. A window passes its exploratory screen at 30 text-eligible reviews over at least 7 distinct review dates on each side, with the full window inside the game's observed review-date bounds; 100 reviews per side is marked as stronger coverage. These configurable-in-code screening thresholds do not establish statistical power or complete source coverage. Unverified candidates that pass the coverage screen still need human confirmation as actual patch posts. The announcement publication date may differ from the effective release time.
 
 ## Preprocessed tables
 
@@ -44,7 +49,7 @@ Counts describe the observed convenience sample, not all Steam users. A zero in 
 
 `announcements.parquet` preserves the exported `text`, source URL, title, candidate flags and verification flags. It adds `text_clean`, normalization version, and `heading_context_available = false`. Flattened CSV text does not support reconstructing original headings or inventing release/fix status. Missing optional booleans remain unknown, rather than silently becoming false.
 
-An example such as “not fixed in 1.2.3 🎮” keeps its negation, version and emoji. Do not reuse the legacy lexical-overlap stop-word list for status or sentiment: it removes “not” and “no”. Offsets for evidence excerpts must refer to original text, because normalization can change character positions.
+An example such as “not fixed in 1.2.3 🎮” keeps its negation, version and emoji. Do not reuse the legacy lexical-overlap stop-word list for status or sentiment: it removes “not” and “no”. The complete pipeline explicitly defines evidence offsets against versioned canonical documents, never interchangeably against original markup; see its data dictionary.
 
 ## Contracts and failures
 
@@ -60,10 +65,6 @@ Git tracks source, config, notebooks, tests and the uv lockfile. Generated inter
 
 The manifest records source hashes, package/schema/normalization versions, configured policy, and row counts. Ordering is deterministic, but generation timestamps change on rerun. DVC tracking and MLflow experiments are later additions; no service or cloud account is required now.
 
-## Next implementation steps
+## Continue with the implemented pipeline
 
-1. Inspect the generated report and choose a few games with useful patch/review windows.
-2. Recover original announcement markup from the collection machine, preserving title/heading/branch context and source timestamps.
-3. Verify pilot patch posts and release times; record uncertainty and overlapping updates.
-4. Define annotation guidelines and game-held-out split manifests before training or fine-tuning.
-5. Build an evidence parser/retrieval baseline only after the source context is available.
+Run `uv run --all-extras steam-insights prepare-data --online` to resume source recovery and historical review collection, then build and validate model inputs. Inspect [the enriched quality report](../reports/data_quality/pipeline/report.md), follow [the annotation guide](../data/annotations/README.md), and use the [pipeline guide](data_pipeline.md) for independent stages and model loading.

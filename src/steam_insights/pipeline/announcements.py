@@ -111,6 +111,7 @@ def prepare_announcement_observations(observations: list[dict], config) -> dict:
     if not revisions:
         raise ValueError("No valid announcements remain")
     current = {}
+    observation_ranks = {}
     minimum_time = datetime.min.replace(tzinfo=timezone.utc)
     for doc in revisions.values():
         key = (doc["appid"], doc["post_id"])
@@ -119,6 +120,12 @@ def prepare_announcement_observations(observations: list[dict], config) -> dict:
             doc["structure_available"],
             doc["announcement_revision_id"],
         )
+        observation_key = (*key, *rank[:2])
+        if observation_key in observation_ranks:
+            raise ValueError(
+                f"Conflicting announcement revisions at the same observation time/quality: {key}"
+            )
+        observation_ranks[observation_key] = doc["announcement_revision_id"]
         if key not in current or rank > current[key][0]:
             current[key] = (rank, doc)
     documents = sorted(

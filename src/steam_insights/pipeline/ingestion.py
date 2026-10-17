@@ -65,10 +65,6 @@ def source_files(config: PipelineConfig) -> list[Path]:
     paths.extend(archive.glob("*/reviews.jsonl"))
     paths.extend(archive.glob("*/news.json"))
     paths.extend(config.input("recovery_dir").glob("records/**/*.json"))
-    for filename in ("announcement_recovery_report.json", "review_backfill_report.json"):
-        report = config.input("recovery_dir") / filename
-        if report.exists():
-            paths.append(report)
     for name in ("annotations", "patch_verification"):
         if config.input(name).exists():
             paths.append(config.input(name))

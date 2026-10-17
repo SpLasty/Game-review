@@ -8,7 +8,7 @@ Effort: balanced. ASK: never. Assurance: draft. Existing quality-report working 
 | F1 | Explicit schemas, normalized review revisions/passages, Parquet/DuckDB | `uv run steam-insights pipeline --stage reviews` | MUST | passed |
 | F2 | Structured announcements, evidence, changes, bounded source recovery | `uv run steam-insights pipeline --stage announcements` | MUST | passed |
 | F3 | Windows, candidates, split/annotation/model exports and atomic snapshots | `uv run steam-insights pipeline` | MUST | passed |
-| F4 | Invariants, actual snapshot, documentation and handoff | `uv run steam-insights pipeline-validate` and unittest suite | MUST | pending |
+| F4 | Invariants, actual snapshot, documentation and handoff | `uv run steam-insights pipeline-validate` and unittest suite | MUST | passed |
 
 ## Run record
 
@@ -27,3 +27,11 @@ F1: full review stage exited 0: 73,336 current reviews/revisions, 0 quarantined,
 F2: announcement stage passed on original and recovered data. 12 public requests recovered all 35 prioritized IDs; 1,107 structured current posts, 237 source-confirmed patch posts. All 50 tests passed; cached review and announcement stages passed. A regression caught future-tense `will be fixed`; rule now preserves planned status and explicit negation.
 
 F3: `steam-insights prepare-data` completed the actual offline workflow, published snapshot b1a7c5e1038c0b4a50d32e7c7b1800c060466c456bd66a13c38e2f860e8ce5f7, passed 175 dataset gates, refreshed reports and exported a development annotation queue. The SQL temporal check caught a real America/Denver daylight-saving discrepancy; all SQL interval arithmetic now explicitly uses UTC, with a regression test. All 18 new pipeline tests pass. No human labels were invented.
+
+F4: `uv run --all-extras steam-insights prepare-data` exited 0 on the actual repository data, published snapshot f6ed010d3a378a5a12a4d9e502a41aae540c77b863356eae972189164cec0240, passed 175 dataset gates, refreshed the combined quality report and exported a development annotation queue. `uv run --all-extras python -m unittest discover -s tests -v` passed 62 tests; Ruff passed. Both example scripts and all Python cells in notebook 03 executed against the actual published tables. Original three CSV SHA-256 values remain unchanged.
+
+The final snapshot contains 73,336 current reviews, 3,638 current announcements, 32,759 structural changes and 27,684 unlabeled candidate pairs. There are 249 automatically source-confirmed patch posts and six assistant source-reviewed posts; 15 confirmed/reviewed windows pass the availability screen. No human training annotations exist.
+
+Final regressions cover Valve BBCode image/list/table markup, canonical annotation context and preservation, resumable review cursors, advancing beyond exhausted sparse windows, title/heading status scope including Workarounds, stable identity despite operational timestamp changes, and failure on ambiguous announcement revisions. One intermediate build was intentionally refused after source code changed during processing; it preserved the preceding pointer and the subsequent unchanged-source build succeeded.
+
+Historical review backfill is implemented and tested with simulated responses but has not been run against Steam here. The handoff command `uv run --all-extras steam-insights prepare-data --online` performs it under the shared request budget. Source-only recovery already ran using 12 public requests. Missing human labels, historical revisions, deployment times and source gaps remain documented prerequisites. No live stubs or pending implementation rungs remain.

@@ -271,8 +271,15 @@ def backfill_reviews(config, *, refresh=False, client=None) -> dict:
         raise ValueError("Run pipeline --stage reviews before backfill-reviews")
     from steam_insights.pipeline.datasets import build_windows
 
+    report_path = client.directory / "review_backfill_report.json"
+    prior_windows = (
+        json.loads(report_path.read_text()).get("windows", []) if report_path.exists() else []
+    )
     windows = {
-        w["patch_id"]: w for w in build_windows(read_table(review_path, "reviews"), patches, config)
+        w["patch_id"]: w
+        for w in build_windows(
+            read_table(review_path, "reviews"), patches, config, {"windows": prior_windows}
+        )
     }
     now = datetime.now(timezone.utc)
     eligible = [
@@ -281,6 +288,7 @@ def backfill_reviews(config, *, refresh=False, client=None) -> dict:
         if (p["verified_for_analysis"] or p["legacy_manual_flag"])
         and p["anchor_utc"] + timedelta(days=config.values["windows"]["days_after"]) <= now
         and not windows[p["patch_id"]]["coverage_screen_met"]
+        and (refresh or not windows[p["patch_id"]]["review_collection_complete"])
     ]
     selected = sorted(
         eligible,
@@ -395,12 +403,8 @@ def backfill_reviews(config, *, refresh=False, client=None) -> dict:
                 break
         if client.requests >= config.values["collection"]["max_requests"]:
             break
-    report_path = client.directory / "review_backfill_report.json"
-    previous = (
-        json.loads(report_path.read_text()).get("windows", []) if report_path.exists() else []
-    )
     merged = {
-        (r["patch_id"], r["side"], r["start_utc"], r["end_utc"]): r for r in previous + reports
+        (r["patch_id"], r["side"], r["start_utc"], r["end_utc"]): r for r in prior_windows + reports
     }
     result = {
         "kind": "review_backfill",

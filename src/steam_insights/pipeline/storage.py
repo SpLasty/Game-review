@@ -246,6 +246,7 @@ SCHEMAS.update(
             "pre_negative_recommendation_share": FLOAT,
             "post_negative_recommendation_share": FLOAT,
             "observed_bounds_cover_window": BOOL,
+            "window_coverage_evidence": TEXT,
             "coverage_screen_met": BOOL,
             "stronger_coverage_screen_met": BOOL,
             "verified_patch_post": BOOL,

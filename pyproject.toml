@@ -30,7 +30,7 @@ where = ["src"]
 [tool.ruff]
 target-version = "py311"
 line-length = 100
-include = ["src/**/*.py", "tests/test_data_*.py", "scripts/check_data_foundation.py"]
+include = ["src/**/*.py", "tests/test_data_*.py", "tests/test_pipeline*.py", "scripts/check_data_foundation.py", "scripts/data/**/*.py", "examples/**/*.py"]
 
 [tool.ruff.lint]
 select = ["E4", "E7", "E9", "F", "I"]

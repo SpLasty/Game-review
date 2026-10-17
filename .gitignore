@@ -15,6 +15,7 @@ data/interim/
 data/datasets/
 data/raw/pipeline_recovery/
 data/annotations/*.jsonl
+!data/annotations/patch_verification.jsonl
 data/annotations/queues/
 reports/data_exploration/
 .matplotlib/
