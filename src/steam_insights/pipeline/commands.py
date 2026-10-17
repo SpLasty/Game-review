@@ -39,6 +39,8 @@ def annotation_or_validation_command(config, args):
             splits=splits,
             batch_size=args.batch_size,
             max_batch_chars=args.max_batch_chars,
+            patch_id=args.patch_id,
+            exclude_annotated=args.exclude_annotated,
         )
     if args.command == "pipeline-validate":
         result = validate_snapshot(directory)

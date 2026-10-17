@@ -45,6 +45,27 @@ The directory contains:
 | `response.schema.json` | Structured response contract. |
 | `manifest.json` | Frozen dataset, candidate membership, prompt version and batch inventory. |
 
+## Patch-scoped retrieval pilot
+
+For a focused audit of one patch, use `--patch-id`. With this option, export spreads examples across change/task/split groups and chooses the highest lexical-score candidates within each group first. `--exclude-annotated` omits candidate IDs already present in the snapshot's machine annotation table, which is useful when continuing a labeling pass after a rebuild.
+
+```bash
+uv run --all-extras steam-insights llm-annotations-export \
+  --patch-id 9593c96b043f323204b6db3437497a9b4972e5986d637dd7e21ce7b908946839 \
+  --sample-size 200 --split train --exclude-annotated \
+  --output data/annotations/llm_jobs/sot-381-pilot
+```
+
+Patch jobs include `retrieval_audit.csv`, which records the lexical candidate pool, lexical rank within each change/task, and which pairs were sampled or already labeled. The sidecar is not shown to the labeling model. It audits only pairs created by the current lexical retriever; high relevance among surfaced pairs says nothing about pairs the retriever missed. The sampling is stratified and rank-prioritized, so relevance rates are descriptive rather than unbiased precision estimates. After responses arrive, summarize them with:
+
+```bash
+python scripts/data/report_patch_pilot.py \
+  --job data/annotations/llm_jobs/sot-381-pilot \
+  --responses data/annotations/llm_jobs/sot-381-pilot/responses
+```
+
+The generated `retrieval_audit_report.md` summarizes response coverage and relevance by task and lexical rank. It does not claim recall or patch causality.
+
 Each example includes its task direction, review, selected passage, specific change, title, headings and full canonical announcement. Recommendation votes and rule-generated labels are omitted. The default limits are ten examples and 100,000 source JSON characters per batch. These are file-transport heuristics, not token limits. An oversized individual example is flagged and preserved intact rather than losing evidence through truncation.
 
 ## 2. Give the Markdown files to an LLM
@@ -60,6 +81,8 @@ The model supplies:
 - `review_evidence` and `change_evidence`: exact source quotes in objects such as `{"text":"exact quote"}`; null where appropriate.
 - `rationale`: a short explanation.
 - `confidence`: self-reported 0–1 confidence, retained for inspection rather than treated as a calibrated probability or automatic quality guarantee.
+
+Relevance is decided for the review/change pair, in its task direction. For `post_patch_feedback`, the review must discuss the specific preceding change. For `retrospective_complaint_resolution`, the earlier review must describe the specific problem the later change addresses. A shared game term or broad opinion about bugs, PvP, ships, or the game does not establish relevance. Use `uncertain` when the review and change share a symptom but the source context does not identify the same issue. A `relevant` decision needs an exact quote from both the review and the full announcement. The exported input includes the change, title, headings, and full canonical announcement so the labeler can use surrounding context.
 
 The importer computes character offsets for unique exact quotes. If the same quote appears multiple times, the response must include its zero-based Unicode `start`. Invented/paraphrased quotes fail import. Irrelevant pairs require `not_applicable` sentiment/fix status; relevant pairs require evidence from both sources.
 
@@ -78,6 +101,8 @@ uv run --all-extras steam-insights llm-annotations-import \
 `--input` accepts one JSONL/JSON file or a directory of those files. A JSON array or a single enclosing Markdown code fence is also accepted. Partial batches may be imported; the command reports remaining job responses. Re-importing the same answers under the same model/run/job is idempotent. Use a distinct run ID for another model or labeling pass. Responses that change labels in the same run are rejected rather than silently overwritten.
 
 Import checks the frozen snapshot and job membership, allowed labels, exact evidence, confidence range and machine provenance. It adds import time, model, run, job and prompt version, then atomically merges accepted records into `data/annotations/llm_labels.jsonl`. Invalid responses leave the existing label file intact. Import does not write to human `labels.jsonl`.
+
+These checks validate data integrity and provenance; they do not independently verify the semantic relevance judgment. LLM labels remain silver and should be sampled or individually audited against the full source context before using them to claim retrieval precision or tune a threshold.
 
 An optional second model/pass can label the same job without seeing the first model's responses. If active machine decisions disagree, the candidate is preserved for inspection but excluded from silver training data. Agreement is a consistency check, not proof of correctness; one valid pass can produce silver data. A later machine decision may use an explicit `supersedes` list of older same-candidate annotation IDs to resolve previous decisions. No human adjudication is required.
 

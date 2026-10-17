@@ -1,0 +1,12 @@
+{
+  "status": "SWEEP_UNAVAILABLE",
+  "reason": "Independent agent delegation is disabled by the active collaboration instructions.",
+  "audits_performed_here": [
+    "Verified that exported request IDs map only to the requested patch.",
+    "Verified that the lexical audit sidecar contains the full scoped candidate pool and marks selected and previously labeled IDs.",
+    "Verified that all 200 imported response IDs belong to the frozen job and that no responses are missing.",
+    "Ran the pipeline unittest suite and Ruff lint/format checks.",
+    "Rebuilt the published snapshot and confirmed all 196 validation checks passed."
+  ],
+  "remaining_independent_review": "Have a second reviewer inspect whether the two uncertain examples should remain uncertain and whether the lexical-ranking audit supports any retrieval change before treating its label distribution as a tuning target."
+}

@@ -1,5 +1,6 @@
 """Provider-neutral file jobs and evidence-validated machine supervision."""
 
+import csv
 import json
 import math
 import os
@@ -93,14 +94,42 @@ def export_llm_job(
     splits=("train", "validation"),
     batch_size=10,
     max_batch_chars=100_000,
+    patch_id=None,
+    exclude_annotated=False,
 ):
     if min(sample_size, batch_size, max_batch_chars) <= 0:
         raise ValueError("LLM sample and batch limits must be positive")
     if output.exists():
         raise ValueError("LLM job output already exists; choose a new directory")
-    selected = sample_annotation_pairs(directory, sample_size=sample_size, splits=splits)
+    selected = sample_annotation_pairs(
+        directory,
+        sample_size=sample_size,
+        splits=splits,
+        patch_id=patch_id,
+        exclude_annotated=exclude_annotated,
+    )
     candidates = {r["candidate_id"]: r for r in read_table(directory, "candidates")}
     docs = {r["announcement_revision_id"]: r for r in read_table(directory, "announcements")}
+    if patch_id is not None:
+        pair_by_id = {r["candidate_id"]: r for r in read_table(directory, "model_pair_inputs")}
+        annotation_ids = {r["candidate_id"] for r in read_table(directory, "llm_annotations")}
+        audit_candidates = [
+            row
+            for row in pair_by_id.values()
+            if candidates[row["candidate_id"]].get("patch_id") == patch_id
+            and row["split"] in splits
+            and not row["cross_split_duplicate"]
+        ]
+        selected_ids = {row["candidate_id"] for row in selected}
+        audit_rows = sorted(
+            audit_candidates,
+            key=lambda row: (
+                row["task"],
+                row["change_id"],
+                -candidates[row["candidate_id"]]["lexical_score"],
+                row["candidate_id"],
+            ),
+        )
     records = []
     for row in selected:
         doc = docs[candidates[row["candidate_id"]]["announcement_revision_id"]]
@@ -124,7 +153,14 @@ def export_llm_job(
             }
         )
     job_id = stable_id(
-        "llm_job_v1", directory.name, PROMPT_VERSION, records, batch_size, max_batch_chars
+        "llm_job_v1",
+        directory.name,
+        PROMPT_VERSION,
+        records,
+        batch_size,
+        max_batch_chars,
+        patch_id,
+        exclude_annotated,
     )
     manifest = {
         "job_id": job_id,
@@ -133,6 +169,17 @@ def export_llm_job(
         "created_utc": utc_now(),
         "splits": list(splits),
         "examples": len(records),
+        "patch_id": patch_id,
+        "exclude_annotated": exclude_annotated,
+        "sampling_strategy": "round_robin_by_change_task_split"
+        if patch_id is not None
+        else "round_robin_by_game_task_split",
+        "lexical_candidate_pool": len(audit_candidates) if patch_id is not None else None,
+        "existing_machine_labeled_in_pool": (
+            sum(row["candidate_id"] in annotation_ids for row in audit_candidates)
+            if patch_id is not None
+            else None
+        ),
         "candidate_ids": [r["candidate_id"] for r in records],
         "batches": [],
     }
@@ -142,6 +189,45 @@ def export_llm_job(
     with (output / "requests.jsonl").open("w", encoding="utf-8") as handle:
         for record in records:
             handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+    if patch_id is not None:
+        with (output / "retrieval_audit.csv").open("w", encoding="utf-8", newline="") as handle:
+            fields = [
+                "candidate_id",
+                "patch_id",
+                "appid",
+                "task",
+                "split",
+                "change_id",
+                "review_revision_id",
+                "lexical_score",
+                "shared_terms",
+                "lexical_rank_within_change",
+                "sampled_for_labeling",
+                "already_machine_labeled",
+            ]
+            writer = csv.DictWriter(handle, fieldnames=fields)
+            writer.writeheader()
+            ranks = {}
+            for row in audit_rows:
+                candidate = candidates[row["candidate_id"]]
+                rank_key = (row["task"], row["change_id"])
+                ranks[rank_key] = ranks.get(rank_key, 0) + 1
+                writer.writerow(
+                    {
+                        "candidate_id": row["candidate_id"],
+                        "patch_id": candidate["patch_id"],
+                        "appid": row["appid"],
+                        "task": row["task"],
+                        "split": row["split"],
+                        "change_id": row["change_id"],
+                        "review_revision_id": row["review_revision_id"],
+                        "lexical_score": candidate["lexical_score"],
+                        "shared_terms": "|".join(candidate["shared_terms"]),
+                        "lexical_rank_within_change": ranks[rank_key],
+                        "sampled_for_labeling": row["candidate_id"] in selected_ids,
+                        "already_machine_labeled": row["candidate_id"] in annotation_ids,
+                    }
+                )
     groups, group, size = [], [], 0
     for record in records:
         length = len(json.dumps(record, ensure_ascii=False))
@@ -179,7 +265,12 @@ def export_llm_job(
         "Use the same model/run identifier for one pass, then import each file. "
         "Incomplete batches may be imported; reruns preserve existing labels. "
         "Use a separate run ID for a second model/pass. Disagreement is excluded from silver export. "
-        "No human annotation or API credentials are required.\n",
+        "No human annotation or API credentials are required. "
+        + (
+            "retrieval_audit.csv describes the patch-scoped lexical candidate pool and ranks pairs by lexical score within each change/task; it is not part of the labeling prompt and does not represent retrieval recall.\n"
+            if patch_id is not None
+            else "\n"
+        ),
         encoding="utf-8",
     )
     return {

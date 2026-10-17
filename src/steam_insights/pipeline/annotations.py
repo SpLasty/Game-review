@@ -198,16 +198,53 @@ def labeled_exports(
     }
 
 
-def sample_annotation_pairs(directory, *, sample_size=100, splits=("train", "validation")):
+def sample_annotation_pairs(
+    directory,
+    *,
+    sample_size=100,
+    splits=("train", "validation"),
+    patch_id=None,
+    exclude_annotated=False,
+):
     from steam_insights.pipeline.storage import read_table
 
     pairs = read_table(directory, "model_pair_inputs")
+    candidate_by_id = {}
+    if patch_id is not None:
+        candidate_by_id = {row["candidate_id"]: row for row in read_table(directory, "candidates")}
+        pairs = [
+            row
+            for row in pairs
+            if candidate_by_id.get(row["candidate_id"], {}).get("patch_id") == patch_id
+        ]
+        if not pairs:
+            raise ValueError(f"No review/change candidates found for patch {patch_id}")
+    if exclude_annotated:
+        labeled_ids = {row["candidate_id"] for row in read_table(directory, "llm_annotations")}
+        pairs = [row for row in pairs if row["candidate_id"] not in labeled_ids]
     groups = defaultdict(list)
     for row in pairs:
         if row["split"] in splits and not row["cross_split_duplicate"]:
-            groups[(row["appid"], row["task"], row["split"])].append(row)
+            key = (
+                (row["appid"], row["task"], row["split"], row["change_id"])
+                if patch_id is not None
+                else (row["appid"], row["task"], row["split"])
+            )
+            groups[key].append(row)
+    if patch_id is not None and not groups:
+        raise ValueError(
+            f"No eligible review/change candidates found for patch {patch_id} in splits {splits}"
+        )
     for group in groups.values():
-        group.sort(key=lambda r: stable_id("annotation_sample_v1", r["candidate_id"]))
+        if patch_id is not None:
+            group.sort(
+                key=lambda row: (
+                    -candidate_by_id[row["candidate_id"]]["lexical_score"],
+                    stable_id("annotation_sample_v1", row["candidate_id"]),
+                )
+            )
+        else:
+            group.sort(key=lambda r: stable_id("annotation_sample_v1", r["candidate_id"]))
     selected = []
     while len(selected) < sample_size and any(groups.values()):
         for key in sorted(groups):

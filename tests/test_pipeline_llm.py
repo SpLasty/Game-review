@@ -1,3 +1,4 @@
+import csv
 import json
 import unittest
 
@@ -90,6 +91,82 @@ class LLMWorkflowTests(unittest.TestCase):
         batches = list(iter_model_batches(self.directory, labeled=True, label_source="llm"))
         self.assertEqual(sum(b.num_rows for b in batches), 1)
         self.assertEqual(batches[0].to_pylist()[0]["label_source"], "llm")
+
+    def test_patch_scoped_job_is_change_balanced_auditable_and_can_skip_labeled_pairs(self):
+        candidates = read_table(self.directory, "candidates")
+        patch_id = candidates[0]["patch_id"]
+        patch_job = self.root / "patch-job"
+        result = export_llm_job(
+            self.directory,
+            patch_job,
+            sample_size=100,
+            splits=("train", "validation", "test"),
+            patch_id=patch_id,
+        )
+        patch_requests = [
+            json.loads(line) for line in (patch_job / "requests.jsonl").read_text().splitlines()
+        ]
+        manifest = json.loads((patch_job / "manifest.json").read_text())
+        with (patch_job / "retrieval_audit.csv").open(encoding="utf-8") as handle:
+            audit = list(csv.DictReader(handle))
+
+        self.assertEqual(result["examples"], len(patch_requests))
+        self.assertTrue(patch_requests)
+        self.assertEqual(manifest["patch_id"], patch_id)
+        self.assertEqual(manifest["sampling_strategy"], "round_robin_by_change_task_split")
+        candidates_by_id = {row["candidate_id"]: row for row in candidates}
+        self.assertTrue(
+            all(
+                candidates_by_id[row["candidate_id"]]["patch_id"] == patch_id
+                for row in patch_requests
+            )
+        )
+        self.assertTrue(all(row["patch_id"] == patch_id for row in audit))
+        self.assertEqual(
+            sum(row["sampled_for_labeling"] == "True" for row in audit), len(patch_requests)
+        )
+
+        first = patch_requests[0]
+        response = {
+            "candidate_id": first["candidate_id"],
+            "relevance": "irrelevant",
+            "sentiment": "not_applicable",
+            "fix_status": "not_applicable",
+            "review_evidence": None,
+            "change_evidence": None,
+            "rationale": "The review does not discuss this specific change.",
+            "confidence": 0.9,
+        }
+        response_path = self.root / "patch-response.jsonl"
+        response_path.write_text(json.dumps(response) + "\n")
+        imported = import_llm_responses(
+            self.config,
+            patch_job,
+            response_path,
+            model_name="test-model",
+            run_id="patch-pilot",
+        )
+        self.assertEqual(imported["imported_responses"], 1)
+
+        run_pipeline(self.config)
+        self.directory = latest_dataset(self.config)
+        fresh_job = self.root / "patch-job-fresh"
+        export_llm_job(
+            self.directory,
+            fresh_job,
+            sample_size=100,
+            splits=("train", "validation", "test"),
+            patch_id=patch_id,
+            exclude_annotated=True,
+        )
+        fresh_ids = {
+            json.loads(line)["candidate_id"]
+            for line in (fresh_job / "requests.jsonl").read_text().splitlines()
+        }
+        fresh_manifest = json.loads((fresh_job / "manifest.json").read_text())
+        self.assertNotIn(first["candidate_id"], fresh_ids)
+        self.assertTrue(fresh_manifest["exclude_annotated"])
+        self.assertGreaterEqual(fresh_manifest["existing_machine_labeled_in_pool"], 1)
 
     def test_bad_quotes_unknown_ids_and_fake_human_provenance_are_atomic_failures(self):
         self.submit(self.response())

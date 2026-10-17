@@ -54,6 +54,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--batch-size", type=int, default=10)
     parser.add_argument("--max-batch-chars", type=int, default=100_000)
     parser.add_argument("--sample-size", type=int, default=100)
+    parser.add_argument("--patch-id", help="Restrict an LLM job to one published patch ID")
+    parser.add_argument(
+        "--exclude-annotated",
+        action="store_true",
+        help="Exclude candidates that already have machine labels in this snapshot",
+    )
     parser.add_argument(
         "--split",
         choices=["development", "train", "validation", "test", "all"],
