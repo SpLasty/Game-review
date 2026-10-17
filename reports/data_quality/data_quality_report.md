@@ -1,6 +1,6 @@
 # Steam data quality and patch-window report
 
-Generated: `2026-10-17T04:09:49+00:00`
+Generated: `2026-10-17T04:20:56+00:00`
 
 ## Scope and overall assessment
 
