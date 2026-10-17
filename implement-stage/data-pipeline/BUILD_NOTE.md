@@ -1,0 +1,23 @@
+# Build record — data pipeline
+
+Effort: balanced. ASK: never. Assurance: draft. Existing quality-report working tree is preserved.
+
+| Rung | Feature | Acceptance command | Tier | Status |
+| --- | --- | --- | --- | --- |
+| F0 | Configured entry point to source manifest | `uv run steam-insights pipeline --stage inventory` | MUST | passed |
+| F1 | Explicit schemas, normalized review revisions/passages, Parquet/DuckDB | `uv run steam-insights pipeline --stage reviews` | MUST | pending |
+| F2 | Structured announcements, evidence, changes, bounded source recovery | `uv run steam-insights pipeline --stage announcements` | MUST | pending |
+| F3 | Windows, candidates, split/annotation/model exports and atomic snapshots | `uv run steam-insights pipeline` | MUST | pending |
+| F4 | Invariants, actual snapshot, documentation and handoff | `uv run steam-insights pipeline-validate` and unittest suite | MUST | pending |
+
+## Run record
+
+## Deferred
+
+None of the approved implementation stages deferred. Human annotations and unavailable historical content are data prerequisites, not implemented labels.
+
+## Blockers
+
+None recorded at start.
+
+F0: `uv run steam-insights pipeline --stage inventory` exited 0; source inventory written. Dependencies installed after sandbox DNS failure using approved escalation.

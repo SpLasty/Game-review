@@ -12,6 +12,8 @@ dist/
 .ipynb_checkpoints/
 **/.ipynb_checkpoints/
 data/interim/
+data/datasets/
+data/raw/pipeline_recovery/
 reports/data_exploration/
 .matplotlib/
 .qodo/

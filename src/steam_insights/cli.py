@@ -1,6 +1,7 @@
 """Command-line entry points for the initial offline data workflow."""
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -10,11 +11,19 @@ from steam_insights.data.io import inventory, write_json
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=["inventory", "profile", "preprocess"])
-    parser.add_argument("--config", type=Path, default=Path("configs/data.toml"))
+    parser.add_argument("command", choices=["inventory", "profile", "preprocess", "quality", "pipeline"])
+    parser.add_argument("--config", type=Path)
+    parser.add_argument("--stage", choices=["inventory", "reviews", "announcements", "all"], default="all")
     args = parser.parse_args(argv)
     try:
-        config = load_config(args.config)
+        if args.command == "pipeline":
+            from steam_insights.pipeline.runner import run_pipeline
+            from steam_insights.pipeline.settings import load_pipeline_config
+
+            result = run_pipeline(load_pipeline_config(args.config or "configs/pipeline.toml"), args.stage)
+            print(json.dumps(result, indent=2, default=str))
+            return 0
+        config = load_config(args.config or "configs/data.toml")
         if args.command == "inventory":
             result = inventory(config)
             output = config.reports_dir / "source_inventory.json"
@@ -28,6 +37,16 @@ def main(argv: list[str] | None = None) -> int:
             result = profile(config)
             print(f"Exploration report: {config.reports_dir / 'README.md'}")
             return 0 if all(item["valid"] for item in result["validation"]) else 1
+        elif args.command == "quality":
+            from steam_insights.data.quality_report import generate_quality_report
+
+            result = generate_quality_report(config)
+            print(f"Data-quality report: {result['report']}")
+            print(f"Patch-window table: {result['patch_windows']} ({result['patch_window_count']:,} rows)")
+            validation = json.loads(
+                (config.reports_dir / "profile.json").read_text(encoding="utf-8")
+            )["validation"]
+            return 0 if all(item["valid"] for item in validation) else 1
         else:
             from steam_insights.data.pipeline import preprocess
 

@@ -1,0 +1,30 @@
+# Data pipeline assumption ledger
+<!-- ASK mode: never -->
+
+| ID | Underdetermined choice | Chosen | Class | Source |
+| --- | --- | --- | --- | --- |
+| P01 | Review population | Full English export plus optional collected revisions; balanced export is inventory-only and never concatenated. | semantic | user |
+| P02 | Storage and publication | Versioned Parquet snapshots, zstd level 3, sorted rows, 65,536-row groups, no per-game tiny-file partitions at current scale; rebuildable DuckDB views; publish by directory rename then atomic latest pointer. | interface | default |
+| P03 | Identifiers and missingness | App ID int64; Steam source IDs strings; UTC microsecond timestamps; absent metadata null; source/revision IDs and hashes stable. | interface | default |
+| P04 | Review eligibility and language | Preserve all structurally valid reviews for votes; text eligibility >=10 Unicode word runs and Steam English; seeded language detector is an independent warning, not automatic deletion. | semantic | default |
+| P05 | Normalization and evidence | NFC/whitespace only; preserve original text, negation, versions and emoji. Span offsets address the versioned canonical document, not the original markup. | semantic | user |
+| P06 | Invalid data | Missing required columns or ambiguous conflicting revisions fail publication; defective records quarantine with reasons; exact repeated source records deduplicate with explicit row accounting. | semantic | default |
+| P07 | Verification semantics | Separate post type, source confirmation, legacy human flag, release status and effective release time. Automatic source confirmation requires recovered official content and explicit patch evidence; legacy hard-coded flags remain legacy assertions until audited. | semantic | default |
+| P08 | Change extraction | Deterministic structural fragments are change candidates; inherited title/heading context retained. Planned/known-issue/workaround scope overrides isolated fix wording; ambiguous or flattened fragments require review. | semantic | default |
+| P09 | Release times and events | Publication timestamp is only a proxy unless an explicit release timestamp with zone is supported. Keep posts/events distinct; report overlapping windows and known branch/platform scopes. | semantic | default |
+| P10 | Window screen | Default +/-14 days; >=30 eligible reviews and >=7 distinct UTC dates each side, with observed range covering full window; stronger screen >=100. Screen is sample availability, not power or causal validity. | semantic | user |
+| P11 | Candidate matching | Per-game lexical shortlist, >=2 informative shared terms, at most 5 changes/review/task; feedback uses preceding 14 days, retrospective complaint-resolution uses subsequent 90 days. Record candidates, temporal direction and unknown scope; no inferred relevance labels. | semantic | default |
+| P12 | Dataset splits | Seed 42, 10 development games (8 train/2 validation) and 20 held-out games for current 30-game corpus; configurable for other datasets. Keep revisions/derived records in same split, exclude cross-split exact/high-similarity duplicate families from supervised eligible exports. | semantic | default |
+| P13 | Annotation and training readiness | Gold labels only from explicit validated adjudicated human annotation imports. Preserve disagreement; no automatic gold labels or random negatives. Empty labeled exports are valid and reported as not training-ready. | semantic | user |
+| P14 | Duplicate similarity | Exact casefolded whitespace-normalized families plus bounded SimHash/sequence-similarity near-duplicate inspection; flag saturated buckets and avoid claiming exhaustive paraphrase detection. | semantic | default |
+| P15 | Collection budget | Separate explicit online commands; cached/resumable public Steam news and date-bounded review collection, configurable request/page budgets, retries and delay. Prioritize known patch IDs and 25 well-covered candidate windows. Capped/failed/future-ended windows remain incomplete. | interface | default |
+| P16 | Raw privacy | Retain source text and relevant API fields; pseudonymize author IDs with a local ignored salt before persistence; no SteamID/profile data in model exports. Different legacy hash namespaces are not assumed joinable. | semantic | default |
+| P17 | Revisions and raw source recovery | Import original archives when present. Re-fetched content is a new observation with retrieval time; it never substitutes silently for a historical CSV revision. No fabricated historical edits. | semantic | user |
+| P18 | Orchestration and reproducibility | Reusable stage functions and small wrappers with one offline build command; content snapshot identity covers config, sources, annotation inputs and implementation; logs/time outside deterministic payload comparisons. | interface | default |
+| P19 | Model input contract | Tokenizer-independent full passages and context; model-specific tokenization/truncation handled by loader adapter, never destructive preprocessing. Recommendation is not change-specific sentiment. | semantic | user |
+
+## Notes
+
+- P07: Steam update categories may be missing from the documented news API. Their absence remains unknown. Patch-note type confirmation does not confirm release deployment or fix effectiveness.
+- P12: Split allocation is frozen from game IDs and seed, not patch suitability, labels, or model scores. Pipeline decisions must use development games; held-out games remain available for raw quality auditing only.
+- P15: Online collection can recover missing review periods, but reviews returned now retain their latest text/vote, including edits made after the event.
