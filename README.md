@@ -1,104 +1,68 @@
-# Steam Patch Insights
+# Steam patch relevance restart
 
-Analyze Steam reviews and developer announcements to build evidence-backed patch reports. This branch provides the processing pipeline through versioned model inputs: source recovery, normalization, structured changes, patch evidence, quality reports, candidate pairs and human annotation contracts. Model training and the application come later.
+The repository is restarting around a patch-grounded question: does a Steam review discuss a specific change in a specific update? Stage 0 preserved the old research evidence and retired the previous collector/label workflow. Stage 1 builds an independent source collection package in `steam_patch_relevance`; it does not import the legacy `steam_insights` code or read the archived data.
 
-## Complete data preparation
+## Stage 1 collection
 
-**No annotators required:** the [LLM-only labeling workflow](docs/llm_annotation_workflow.md) exports self-contained batch files, imports exact-evidence machine responses, and publishes separate silver training pairs. Human annotation is optional.
-
-From `Game-review/`:
+Install the locked project environment, then collect the four curated pilot app IDs:
 
 ```bash
 uv sync --locked --all-extras
-uv run --all-extras steam-insights prepare-data --online
+uv run --all-extras steam-relevance collect --online
+uv run --all-extras steam-relevance materialize
+uv run --all-extras steam-relevance inspect
 ```
 
-This resumes bounded Steam collection, builds Parquet tables and DuckDB views, validates the published snapshot, refreshes reports and exports development LLM annotation jobs. Repeat to continue collection beyond the per-run request budget. Omit `--online` to process local inputs only. Existing jobs are preserved.
+The `--online` flag is required for live Steam requests. `--max-requests N` overrides the configured HTTP-attempt budget; each retry attempt counts toward it. Re-running resumes incomplete checkpoints and checks the newest Steam News page for new posts. A safe partial collection exits with status 2 when configured page/request limits are reached; rerun to continue from saved cursors. Use `--refresh` to reacquire previously completed source ranges/windows. `materialize` rebuilds tables/reports offline from already collected raw blobs and checkpoints.
 
-Read the [pipeline guide](docs/data_pipeline.md), [completion and handoff record](docs/data_pipeline_status.md), [data dictionary](docs/data_dictionary.md), and [current readiness report](reports/data_quality/pipeline/report.md). Source confirmation identifies patch-note posts. Training can use LLM silver labels; source coverage and independently validated evaluation remain separate questions.
+Raw response bytes, hashes, checkpoints, and manifests go under the git-ignored `data/relevance_v1/`. Normalized Parquet tables are written per run; game, patch-window, and multilingual coverage reports go to `reports/relevance_v1/stage1/`. The review API defaults to `languages = ["all"]` in `configs/relevance_v1.toml`; you can set a list of Steam API codes such as `["german", "schinese"]`. Do not use an empty list: Steam defines it as English-only. Filter-specific checkpoints keep explicit language runs separate, while stable review revision IDs remain the same across collection filters. Run `inspect` with DuckDB to view the latest local counts. A Steam Web API key is not needed for the seeded pilot. To load a local ignored `.env` for optional catalog discovery, run `uv run --env-file .env --all-extras steam-relevance catalog --online --max-pages 3 --max-results 50000`. The public URL route succeeded in the bounded live run; details are in [`CATALOG_FOLLOWUP.md`](docs/restart/stage1/CATALOG_FOLLOWUP.md).
 
-## Quick start
+The source contract, schema, assumptions, and Stage 1 handoff are in [`docs/restart/stage1/`](docs/restart/stage1/). The [Stage 1.5 multilingual audit](docs/restart/stage1/MULTILINGUAL_AUDIT.md) explains the all-language request evidence and coverage results. API limitations matter: public Steam News does not provide a documented event-type/build link or exact release timestamp, and `GetAppList` requires a key. Patch candidates therefore remain explicitly unverified and use announcement publication time as the review-window anchor. The workflow stops before generating patch-review pairs, relevance labels, or model training data.
 
-Use Python 3.11+ and [uv](https://docs.astral.sh/uv/). Run these commands from the repository root (`Game-review/`):
+## Stage 2 extraction
+
+Build atomic changes, review claims, announcement classifications, game-specific terminology, and temporal tables from a frozen Stage 1 snapshot:
 
 ```bash
-uv sync --locked --extra dev
-uv run steam-insights inventory
-uv run steam-insights profile
-uv run steam-insights quality
-uv run steam-insights preprocess
-uv run python -m unittest discover -s tests -v
+uv run --all-extras steam-relevance stage2 extract --source-run rv1-20261019T031033900187Z-a468b544
 ```
 
-These commands use the existing CSVs and make no Steam API calls. Configuration is in [configs/data.toml](configs/data.toml). Pass `--config path/to/data.toml` after a command to use another configuration. Alternatively, install with `python -m pip install -e ".[dev]"` inside your own virtual environment and run the CLI directly.
+This step is offline. It preserves original text and exact source spans, extracts only structured announcement changes, and does not assign patch relevance or create pairs/labels. Outputs are versioned under `data/relevance_v1/processed/stage2/<dataset-id>/`; QA and coverage reports are under `reports/relevance_v1/stage2/<dataset-id>/`. The CLI prints both paths. See [`Stage 2 handoff`](docs/restart/stage2/HANDOFF.md) for the current run and known gaps, and [`Stage 2 data contracts`](docs/restart/stage2/DATA_CONTRACTS.md) for table grain and field meaning.
 
-Start with the generated [exploration report](reports/data_exploration/README.md) and the combined [data-quality report](reports/data_quality/data_quality_report.md), then the two notebooks:
+## Stage 3 hybrid retrieval
+
+Rank each atomic patch change against review claims in the configured time window, then inspect the independent full-list audit packets:
 
 ```bash
-uv sync --locked --extra dev --extra notebooks
-uv run --extra notebooks jupyter lab
+uv run --all-extras steam-relevance stage3 retrieve \
+  --source-dataset rv2-d52a3f9f1a3de2fe80aa098f \
+  --budgets 10 25 50 100 --before-days 14 --after-days 14 \
+  --dense-revision 614241f622f53c4eeff9890bdc4f31cfecc418b3
 ```
 
-1. [01_data_exploration.ipynb](notebooks/01_data_exploration.ipynb): populations, validation, missing values, time coverage, edits, lengths, and announcement flags.
-2. [02_preprocessing.ipynb](notebooks/02_preprocessing.ipynb): prepare Parquet tables, inspect types and eligibility, and check source-text preservation.
-3. [03_pipeline_duckdb.ipynb](notebooks/03_pipeline_duckdb.ipynb): query the published dataset, inspect patch periods, and load model input batches.
-
-Use the project environment as the notebook kernel. Committed notebooks have empty outputs; clear outputs before sharing to avoid publishing review excerpts accidentally.
-
-## Repository layout
-
-```text
-configs/data.toml                 Input/output paths and text-eligibility policy
-src/steam_insights/
-  cli.py                         inventory / profile / preprocess / quality commands
-  config.py                      TOML configuration and output-path protection
-  data/
-    io.py                        BOM-safe CSV loading and input fingerprints
-    validation.py                Schema, IDs, booleans and timestamp checks
-    text.py                      Shared Unicode counting and light text cleaning
-    preprocessing.py             Typed tables and explicit derived columns
-    exploration.py               Aggregate tables, plots and exploration report
-    quality_report.py            Review validation and patch-window coverage report
-    pipeline.py                  Validated CSV-to-Parquet workflow
-notebooks/                       Exploration and preprocessing walkthroughs
-scripts/                         Existing collection/export scripts; workflow smoke check
-tests/                           Existing collector tests plus data-contract tests
-data/processed/steam_30_games/    Existing CSV snapshot, treated as immutable input
-data/interim/steam_30_games/      Generated Parquet and manifest (Git-ignored)
-reports/data_exploration/         Generated aggregate reports/plots (Git-ignored)
-reports/data_quality/             Combined quality report and patch-window tables
-docs/data_workflow.md             Data contracts, decisions and next steps
-proposal/                        Original research proposal
-implement-stage/                 Build decisions and verification record
-pyproject.toml / uv.lock          Package metadata and locked dependencies
-```
-
-The new `src/steam_insights/pipeline/` modules implement the complete processing flow; small stage wrappers live in `scripts/data/`, and model/DuckDB examples live in `examples/`. See the pipeline guide for their responsibilities.
-
-## Existing data and interpretation
-
-- `all_english_reviews.csv`: 73,336 reviews; use this population for collected recommendation statistics, including short reviews.
-- `balanced_reviews.csv`: 30,000 reviews, capped at 1,000 per game with at least ten words. It overlaps the full file and has no positive/negative sentiment quota. Do not concatenate it with the full file as extra observations.
-- `developer_announcements.csv`: 3,445 posts, including news and marketing. Existing patch/keyword flags are heuristics, not gold labels.
-
-The collection began on October 14, 2026; review creation dates span January 14–October 14. About 77% were posted in September or October because collection requested recent reviews and stopped once each game met its target. An edited review's text and vote represent the exported latest state, not its original state.
-
-Raw per-game payloads and resumable state live on the collection machine under `data/raw/steam_30_games/` and are excluded from Git. This checkout may contain only their manifests. The CSVs flatten announcement formatting; they cannot recover the original heading hierarchy.
-
-## Outputs and checks
-
-`profile` writes `profile.json`, per-game/day counts, length bins, missing-value tables, population comparisons, announcement coverage, and four PNG plots. `quality` refreshes those artifacts and writes `reports/data_quality/data_quality_report.md`, `patch_window_quality.csv`, and `game_quality_summary.csv`. Patch windows use 14 days before and after the announcement publication timestamp; the report distinguishes manually verified patches from heuristic candidates and applies transparent review-count/day thresholds. Validation failures still produce diagnostics and a nonzero exit status. Reports use aggregate counts and public announcement metadata, not copied review text.
-
-`preprocess` writes all valid reviews to `reviews.parquet`, the configurable long-text view to `reviews_text.parquet`, and posts to `announcements.parquet`. It preserves original text and adds cleaned text; no stop words, negation, punctuation, versions or emoji are removed. Invalid required fields or duplicate IDs stop preprocessing instead of silently dropping rows. The manifest records input checksums, policy and output counts.
+This full command uses BM25, multilingual dense embeddings, and per-game entity/aspect retrieval. Install dependencies with `uv sync --locked --all-extras`; the first run downloads the pinned model. The offline smoke mode explicitly skips dense scoring:
 
 ```bash
-uv run --extra dev ruff check
-uv run --extra dev ruff format --check src tests/test_data_preprocessing.py scripts/check_data_foundation.py
-uv run python scripts/check_data_foundation.py
+uv run --all-extras steam-relevance stage3 retrieve \
+  --source-dataset rv2-d52a3f9f1a3de2fe80aa098f --no-dense
 ```
 
-The final command executes both notebooks' Python cells against the actual snapshot and verifies the generated Parquet data against the unchanged source inputs. It does not require Jupyter to run. See [the workflow guide](docs/data_workflow.md) for schemas and limitations.
+Stage 3 writes versioned candidates and diagnostics under `data/relevance_v1/processed/stage3/`, with run reports under `reports/relevance_v1/stage3/`. Candidate scores are retrieval evidence only; no relevance labels or recall estimates are produced. See [`Stage 3 handoff`](docs/restart/stage3/HANDOFF.md), [architecture](docs/restart/stage3/ARCHITECTURE.md), and [data contracts](docs/restart/stage3/DATA_CONTRACTS.md).
 
-## Legacy collection
+## Stage 4 bounded silver-label pilot
 
-`scripts/run_collection.ps1` runs the original network collection, analysis and balanced export on a collection machine. It can rewrite the legacy CSV exports. The new pipeline does not invoke it; `prepare-data --online` saves separate immutable recovered observations and leaves those CSVs unchanged.
+Stage 4 exports provider-neutral JSONL jobs for specific change/claim pairs plus a separate, candidate-independent full-list audit. The current 24-pair/6-review pilot is complete as `rv4-02c10d1f84099a6d45e2a04a`; see its [readiness report](reports/relevance_v1/stage4/rv4-02c10d1f84099a6d45e2a04a/readiness_report.md) and [handoff](docs/restart/stage4/HANDOFF.md). The pilot contains 24 LLM-silver candidate judgments and two topical-only full-list findings. It is not ready for fine-tuning, and full-scale labeling awaits approval.
+
+To reproduce the same bounded export:
+
+```bash
+uv run --all-extras steam-relevance stage4 export \
+  --source-dataset rv3-cef79b660029d7d5eb703567 \
+  --candidate-pairs 24 --audit-reviews 6 --seed stage4-pilot-v5
+```
+
+The response import requires a JSONL file whose entries echo the exported `input_id`, `prompt_version`, and `prompt_sha256`, plus provider/model/version provenance. The complete schema and validation rules are in [`Stage 4 data contracts`](docs/restart/stage4/DATA_CONTRACTS.md). LLM labels remain silver unless a person actually reviews them; the pilot's inspection queue is explicitly unreviewed.
+
+## Historical research
+
+Historical handoffs, candidate tables, labels, and archived source data remain under `legacy/` and the original `data/` paths. They are evidence only; the new pipeline uses separate IDs and paths. The retained `steam_insights` package and notebooks remain isolated while an interactive notebook kernel may depend on them.

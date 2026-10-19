@@ -1,20 +1,18 @@
 """Behavioral checks for data meaning, source preservation and snapshot contracts."""
 
-import io
 import json
 import tempfile
 import unittest
-from contextlib import redirect_stderr
 from pathlib import Path
 
 import pandas as pd
 
-from scripts import collect_steam
 from steam_insights.config import DataConfig, load_config
 from steam_insights.data.exploration import profile
 from steam_insights.data.io import read_csv, sha256
 from steam_insights.data.pipeline import preprocess
 from steam_insights.data.preprocessing import clean_text, prepare_announcements, prepare_reviews
+from steam_insights.data.text import word_count
 from steam_insights.data.validation import validate_reviews
 
 
@@ -181,10 +179,10 @@ class PreparationTests(unittest.TestCase):
             clean_text("cafe\u0301\t NOT fixed\r\n\r\n\r\n0.1"), "café NOT fixed\n\n0.1"
         )
 
-    def test_word_count_uses_the_collectors_unicode_convention(self):
+    def test_word_count_uses_the_source_unicode_convention(self):
         frame = reviews_fixture()
         frame.loc[0, "review_text"] = "café naïve 中文 кириллица"
-        frame["word_count"] = frame["review_text"].map(collect_steam.word_count).astype("string")
+        frame["word_count"] = frame["review_text"].map(word_count).astype("string")
         report = validate_reviews(frame)
         self.assertNotIn("word_count_mismatch", [item["check"] for item in report.issues])
         row = (
@@ -290,21 +288,6 @@ class WorkflowTests(unittest.TestCase):
         )
         with self.assertRaisesRegex(ValueError, "separate"):
             load_config(path)
-
-
-class CollectorPathTests(unittest.TestCase):
-    def test_existing_default_and_safe_nested_snapshot_paths_are_accepted(self):
-        self.assertEqual(collect_steam.parse_args([]).snapshot, "raw/steam_30_games")
-        self.assertEqual(
-            collect_steam.parse_args(["--snapshot", "raw/new_snapshot"]).snapshot,
-            "raw/new_snapshot",
-        )
-
-    def test_traversal_and_absolute_snapshot_paths_are_rejected(self):
-        for value in ("../escape", "/tmp/escape", "raw/../escape", "raw\\escape", "raw//x"):
-            with self.subTest(value=value), redirect_stderr(io.StringIO()):
-                with self.assertRaises(SystemExit):
-                    collect_steam.parse_args(["--snapshot", value])
 
 
 if __name__ == "__main__":

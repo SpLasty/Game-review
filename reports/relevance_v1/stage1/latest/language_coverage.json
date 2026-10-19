@@ -1,0 +1,27 @@
+{
+  "announcement_language_status_counts": {
+    "missing": 1331
+  },
+  "collection_phase": "pre_backfill",
+  "english_reviews": 58520,
+  "english_share_of_known_languages": 0.347729,
+  "language_backfill_performed": false,
+  "missing_language_reviews": 0,
+  "non_english_reviews": 109772,
+  "non_english_share_of_known_languages": 0.652271,
+  "non_string_language_metadata": 0,
+  "patch_window_language_rows": 2016,
+  "requested_review_languages": [
+    "all"
+  ],
+  "review_language_status_counts": {
+    "english": 58520,
+    "non_english": 109772
+  },
+  "review_revisions": 168292,
+  "review_window_count": 84,
+  "review_windows_complete": 16,
+  "review_windows_incomplete": 68,
+  "run_id": "rv1-20261019T031033900187Z-a468b544",
+  "unexpected_code_reviews": 0
+}

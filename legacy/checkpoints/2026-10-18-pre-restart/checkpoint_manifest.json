@@ -1,0 +1,56 @@
+{
+  "created_utc": "2026-10-19T02:23:32.605929+00:00",
+  "head": "062661689173c449caf90a6fb5648976e1596e8b",
+  "files": [
+    {
+      "path": "legacy/checkpoints/2026-10-18-pre-restart/head.bundle",
+      "bytes": 16721988,
+      "sha256": "cc76dbbab52ca19f8106c578a8b10d6de8c46ce855ddc096843051af12b6daa3"
+    },
+    {
+      "path": "legacy/checkpoints/2026-10-18-pre-restart/revision.txt",
+      "bytes": 41,
+      "sha256": "e30612c048aee5e5d336fc4a4f3c8a18bd1bcda62c4ab85d0b496730fd718d50"
+    },
+    {
+      "path": "legacy/checkpoints/2026-10-18-pre-restart/status_porcelain_v2.txt",
+      "bytes": 1643,
+      "sha256": "03b76ec1f48ef961e9ff97e62c435eb3a82f9c5b75a2c098168c4791745b3226"
+    },
+    {
+      "path": "legacy/checkpoints/2026-10-18-pre-restart/tracked_worktree.patch",
+      "bytes": 39960,
+      "sha256": "32bc4f43409d0d4e38fd0420b73c3aeaf008b38c14a3380b3a7dbcc5c43d2822"
+    },
+    {
+      "path": "legacy/checkpoints/2026-10-18-pre-restart/untracked/legacy/checkpoints/2026-10-18-pre-restart/head.bundle",
+      "bytes": 16721988,
+      "sha256": "cc76dbbab52ca19f8106c578a8b10d6de8c46ce855ddc096843051af12b6daa3"
+    },
+    {
+      "path": "legacy/checkpoints/2026-10-18-pre-restart/untracked/legacy/checkpoints/2026-10-18-pre-restart/revision.txt",
+      "bytes": 41,
+      "sha256": "e30612c048aee5e5d336fc4a4f3c8a18bd1bcda62c4ab85d0b496730fd718d50"
+    },
+    {
+      "path": "legacy/checkpoints/2026-10-18-pre-restart/untracked/legacy/checkpoints/2026-10-18-pre-restart/status_porcelain_v2.txt",
+      "bytes": 1643,
+      "sha256": "03b76ec1f48ef961e9ff97e62c435eb3a82f9c5b75a2c098168c4791745b3226"
+    },
+    {
+      "path": "legacy/checkpoints/2026-10-18-pre-restart/untracked/legacy/checkpoints/2026-10-18-pre-restart/tracked_worktree.patch",
+      "bytes": 39960,
+      "sha256": "32bc4f43409d0d4e38fd0420b73c3aeaf008b38c14a3380b3a7dbcc5c43d2822"
+    },
+    {
+      "path": "legacy/checkpoints/2026-10-18-pre-restart/untracked/reports/data_quality/helldivers_710_full_list_review_audit.md",
+      "bytes": 11258,
+      "sha256": "44a32e9912d57471466f472d5989ce785c8fc221fd30f76556adefaf6f125ba5"
+    },
+    {
+      "path": "legacy/checkpoints/2026-10-18-pre-restart/untracked/reports/data_quality/patch_pilot_rowwise_audit.md",
+      "bytes": 7389,
+      "sha256": "58c35d7862c2eabf936a16ccaa95415aa21286802c6bd8ff78b69bb46a3efb00"
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+appid,game_name,news_collection_status,announcements_seen,steam_community_feed_announcements,usable_official_announcements,announcements_missing_body,announcements_with_links,patch_candidates_selected,unique_review_revisions,review_window_memberships,review_window_revisions_collected,review_window_total_reported,review_window_coverage_fraction,review_windows_complete,review_windows_total,all_patch_windows_complete
+730,Counter-Strike 2,complete,260,241,241,0,6,7,71992,71992,71992,493203,0.146,0,21,False
+570,Dota 2,complete,140,101,101,0,36,7,35988,35988,35988,128855,0.2793,0,21,False
+553850,HELLDIVERS 2,complete,811,164,164,0,565,7,33478,33478,33478,66649,0.5023,4,21,False
+275850,No Man's Sky,complete,120,29,29,0,74,7,26834,26834,26834,34832,0.7704,12,21,False

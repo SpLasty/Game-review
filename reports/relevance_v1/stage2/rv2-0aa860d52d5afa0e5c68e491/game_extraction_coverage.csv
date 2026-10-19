@@ -1,0 +1,5 @@
+game_id,game_name,announcements_classified,official_developer_feed_announcements,rule_eligible_patch_episodes,atomic_changes,changes_with_verified_source_spans,changes_with_unresolved_fields,review_claims,review_revisions_with_claims,claim_languages,collected_review_window_segments,complete_review_window_segments,temporal_membership_rows
+730,Counter-Strike 2,260,241,178,976,976,586,146,90,brazilian;bulgarian;czech;danish;english;french;german;latam;polish;portuguese;romanian;russian;schinese;spanish;swedish;tchinese;turkish;ukrainian,21,0,71992
+570,Dota 2,140,101,52,777,777,147,0,0,,21,0,35988
+553850,HELLDIVERS 2,811,164,75,1401,1401,848,0,0,,6,2,10897
+275850,No Man's Sky,120,29,11,0,0,0,0,0,,12,5,14965

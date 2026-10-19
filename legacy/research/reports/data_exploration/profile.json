@@ -1,0 +1,186 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-10-18T07:15:50.843778+00:00",
+  "sources": {
+    "reviews": {
+      "path": "data/processed/steam_30_games/all_english_reviews.csv",
+      "sha256": "7d9d123428e311f262a04b27930fdcf414bf844150fe7cf9e7558452b0d5e200",
+      "bytes": 37135363,
+      "rows": 73336,
+      "columns": [
+        "appid",
+        "game",
+        "review_id",
+        "review_text",
+        "language",
+        "created_utc",
+        "updated_utc",
+        "timestamp_created",
+        "timestamp_updated",
+        "recommended",
+        "unedited",
+        "playtime_at_review_hours",
+        "lifetime_playtime_hours",
+        "primarily_steam_deck",
+        "steam_purchase",
+        "refunded",
+        "author_hash",
+        "word_count",
+        "text_eligible",
+        "mentions_update",
+        "mentions_stability",
+        "mentions_balance",
+        "mentions_monetization",
+        "mentions_cheating",
+        "mentions_bugs",
+        "mentions_version",
+        "source_url"
+      ]
+    },
+    "balanced": {
+      "path": "data/processed/steam_30_games/balanced_reviews.csv",
+      "sha256": "7c481c1e6713e2232da7b13bf914650fa12fcb3a487f314eea08f70eeb75d839",
+      "bytes": 20755481,
+      "rows": 30000,
+      "columns": [
+        "appid",
+        "game",
+        "review_id",
+        "review_text",
+        "language",
+        "created_utc",
+        "updated_utc",
+        "timestamp_created",
+        "timestamp_updated",
+        "recommended",
+        "unedited",
+        "playtime_at_review_hours",
+        "lifetime_playtime_hours",
+        "primarily_steam_deck",
+        "steam_purchase",
+        "refunded",
+        "author_hash",
+        "word_count",
+        "text_eligible",
+        "mentions_update",
+        "mentions_stability",
+        "mentions_balance",
+        "mentions_monetization",
+        "mentions_cheating",
+        "mentions_bugs",
+        "mentions_version",
+        "source_url"
+      ]
+    },
+    "announcements": {
+      "path": "data/processed/steam_30_games/developer_announcements.csv",
+      "sha256": "799fe82ee9b5b0f521745271f624abaa769340b5e803545e16032823545a307f",
+      "bytes": 12361597,
+      "rows": 3445,
+      "columns": [
+        "appid",
+        "game",
+        "gid",
+        "title",
+        "date_utc",
+        "timestamp",
+        "release_branch_hint",
+        "patch_candidate",
+        "verification_status",
+        "text",
+        "source_url",
+        "feed"
+      ]
+    }
+  },
+  "validation": [
+    {
+      "dataset": "reviews",
+      "rows": 73336,
+      "valid": true,
+      "issues": [
+        {
+          "check": "empty_text",
+          "count": 291,
+          "severity": "warning",
+          "detail": "Retained for vote counts; has no usable text"
+        },
+        {
+          "check": "repeated_review_text",
+          "count": 13560,
+          "severity": "warning",
+          "detail": "Repeated wording is retained; inspect for memes or duplicate families"
+        }
+      ]
+    },
+    {
+      "dataset": "balanced",
+      "rows": 30000,
+      "valid": true,
+      "issues": [
+        {
+          "check": "repeated_review_text",
+          "count": 89,
+          "severity": "warning",
+          "detail": "Repeated wording is retained; inspect for memes or duplicate families"
+        }
+      ]
+    },
+    {
+      "dataset": "announcements",
+      "rows": 3445,
+      "valid": true,
+      "issues": [
+        {
+          "check": "empty_text",
+          "count": 2,
+          "severity": "warning",
+          "detail": "Source coverage needs inspection"
+        }
+      ]
+    }
+  ],
+  "announcements": {
+    "posts": 3445,
+    "games": 30,
+    "heuristic_patch_candidates": 890,
+    "verification_flags": {
+      "unverified_other": 2554,
+      "unverified_candidate": 881,
+      "manually_verified_patch": 10
+    },
+    "branch_hints": {
+      "unspecified": 3375,
+      "unstable": 38,
+      "stable": 32
+    }
+  },
+  "review_populations": [
+    {
+      "dataset": "reviews",
+      "reviews": 73336,
+      "games": 30,
+      "negative_votes": 13895,
+      "valid_votes": 73336,
+      "negative_share": 0.18947038289516746,
+      "minimum_words": 10,
+      "below_minimum_words": 42548,
+      "edited_latest_snapshot": 3470,
+      "earliest_created_utc": "2026-01-14T23:28:05+00:00",
+      "latest_created_utc": "2026-10-14T19:47:59+00:00"
+    },
+    {
+      "dataset": "balanced",
+      "reviews": 30000,
+      "games": 30,
+      "negative_votes": 7517,
+      "valid_votes": 30000,
+      "negative_share": 0.25056666666666666,
+      "minimum_words": 10,
+      "below_minimum_words": 0,
+      "edited_latest_snapshot": 2466,
+      "earliest_created_utc": "2026-01-23T16:56:45+00:00",
+      "latest_created_utc": "2026-10-14T19:47:59+00:00"
+    }
+  ]
+}

@@ -1,0 +1,186 @@
+{
+  "dataset_id": "rv2-8e972f0655731faa1c05e14e",
+  "source_stage1_run_id": "rv1-20261019T031033900187Z-a468b544",
+  "complete_review_population": false,
+  "review_limit": 50,
+  "counts": {
+    "announcements": 1331,
+    "patch_changes": 3154,
+    "game_terminology": 1516,
+    "patch_episodes": 316,
+    "review_window_memberships": 133842,
+    "patch_review_windows": 60,
+    "patch_episode_overlaps": 1161,
+    "change_temporal_ambiguities": 941,
+    "qa_sample": 34,
+    "review_claims": 74,
+    "nonempty_reviews_processed": 50,
+    "nonempty_reviews_without_claim_rows": 5
+  },
+  "announcement_category_counts": {
+    "promotional_or_non_patch_announcement": 89,
+    "performance_or_stability_change": 240,
+    "minor_cosmetic_or_localization_update": 63,
+    "other_announcement_unclassified": 645,
+    "major_gameplay_or_balance_update": 210,
+    "specific_bug_fix": 350,
+    "new_feature_or_content": 266,
+    "developer_acknowledgement_or_future_plan": 59
+  },
+  "announcement_counts_by_game": {
+    "570": 140,
+    "730": 260,
+    "275850": 120,
+    "553850": 811
+  },
+  "change_quality": {
+    "rows_with_any_quality_flag": 1040,
+    "flagged_rate": 0.3297400126823082,
+    "source_span_failures": 0,
+    "source_span_failure_rate": 0.0,
+    "flag_counts": {
+      "entity_unresolved": 429,
+      "aspect_unresolved": 662,
+      "developer_fix_qualified": 1
+    },
+    "no_change_rows_generated_for_headings": true
+  },
+  "claim_quality": {
+    "low_confidence_rows_below_0_5": 48,
+    "entity_unresolved_rows": 45,
+    "aspect_unresolved_rows": 71,
+    "polarity_unknown_rows": 66,
+    "nonempty_reviews_without_claim_rows": 5,
+    "review_rows_without_claim_sample_ids": [
+      "rv1_review_revision_be44608e9a36074376c27967",
+      "rv1_review_revision_f43607c9dbe103adc2121c9d",
+      "rv1_review_revision_fb0527042a845dbe680cb9bc",
+      "rv1_review_revision_94013f53bc178d18928c436d",
+      "rv1_review_revision_45637a007bc1c2de0b964252"
+    ],
+    "language_claim_counts": {
+      "730:brazilian": 6,
+      "730:bulgarian": 1,
+      "730:czech": 1,
+      "730:english": 35,
+      "730:french": 3,
+      "730:polish": 1,
+      "730:romanian": 1,
+      "730:russian": 20,
+      "730:spanish": 3,
+      "730:swedish": 1,
+      "730:turkish": 2
+    }
+  },
+  "terminology": {
+    "resource_count": 1516,
+    "game_counts": {
+      "570": 500,
+      "730": 500,
+      "553850": 500,
+      "275850": 16
+    },
+    "cross_game_global_ontology": false
+  },
+  "temporal": {
+    "window_membership_rows": 133842,
+    "patch_episode_overlaps": 1161,
+    "same_entity_change_ambiguities": 941,
+    "membership_semantics": "time-window membership only; not patch relevance",
+    "review_claims_assigned_to_patches": 0
+  },
+  "source_gaps": {
+    "announcements_with_external_or_unverified_note_links": 0,
+    "external_link_fetching": "not performed in Stage 2; only Stage 1 captured URLs",
+    "release_times": "publication time is used as an explicitly unverified window anchor where no release time exists",
+    "manual_translation": "not performed; original review language is preserved"
+  },
+  "qa_sample": {
+    "sample_seed": "stage2-audit-sample-2026-10",
+    "sample_per_stratum": 2,
+    "rows": 34,
+    "manual_review_status": "awaiting_inspection",
+    "change_strata": 28,
+    "claim_strata": 6,
+    "manual_reviewed_rows": 0,
+    "manual_review_summary": null,
+    "manual_findings": [],
+    "manual_reviewer_type": null
+  },
+  "disallowed_outputs": [
+    "patch-review candidate pairs",
+    "relevance labels",
+    "training labels"
+  ],
+  "game_extraction_coverage": [
+    {
+      "game_id": 730,
+      "game_name": "Counter-Strike 2",
+      "announcements_classified": 260,
+      "official_developer_feed_announcements": 241,
+      "rule_eligible_patch_episodes": 178,
+      "atomic_changes": 976,
+      "changes_with_verified_source_spans": 976,
+      "changes_with_unresolved_fields": 481,
+      "review_claims": 74,
+      "review_revisions_with_claims": 45,
+      "claim_languages": "brazilian;bulgarian;czech;english;french;polish;romanian;russian;spanish;swedish;turkish",
+      "collected_review_window_segments": 0,
+      "complete_review_window_segments": 0,
+      "temporal_membership_rows": 71992
+    },
+    {
+      "game_id": 570,
+      "game_name": "Dota 2",
+      "announcements_classified": 140,
+      "official_developer_feed_announcements": 101,
+      "rule_eligible_patch_episodes": 52,
+      "atomic_changes": 777,
+      "changes_with_verified_source_spans": 777,
+      "changes_with_unresolved_fields": 78,
+      "review_claims": 0,
+      "review_revisions_with_claims": 0,
+      "claim_languages": "",
+      "collected_review_window_segments": 0,
+      "complete_review_window_segments": 0,
+      "temporal_membership_rows": 35988
+    },
+    {
+      "game_id": 553850,
+      "game_name": "HELLDIVERS 2",
+      "announcements_classified": 811,
+      "official_developer_feed_announcements": 164,
+      "rule_eligible_patch_episodes": 75,
+      "atomic_changes": 1401,
+      "changes_with_verified_source_spans": 1401,
+      "changes_with_unresolved_fields": 481,
+      "review_claims": 0,
+      "review_revisions_with_claims": 0,
+      "claim_languages": "",
+      "collected_review_window_segments": 0,
+      "complete_review_window_segments": 0,
+      "temporal_membership_rows": 10897
+    },
+    {
+      "game_id": 275850,
+      "game_name": "No Man's Sky",
+      "announcements_classified": 120,
+      "official_developer_feed_announcements": 29,
+      "rule_eligible_patch_episodes": 11,
+      "atomic_changes": 0,
+      "changes_with_verified_source_spans": 0,
+      "changes_with_unresolved_fields": 0,
+      "review_claims": 0,
+      "review_revisions_with_claims": 0,
+      "claim_languages": "",
+      "collected_review_window_segments": 0,
+      "complete_review_window_segments": 0,
+      "temporal_membership_rows": 14965
+    }
+  ],
+  "patch_extraction_coverage": {
+    "episode_rows": 316,
+    "episodes_with_zero_extracted_changes": 122,
+    "episodes_with_partial_stage1_review_windows": 19
+  }
+}

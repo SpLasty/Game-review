@@ -1,0 +1,36 @@
+{
+  "datasets": [
+    {
+      "dataset": "reviews",
+      "rows": 73336,
+      "valid": true,
+      "issues": [
+        {
+          "check": "empty_text",
+          "count": 291,
+          "severity": "warning",
+          "detail": "Retained for vote counts; has no usable text"
+        },
+        {
+          "check": "repeated_review_text",
+          "count": 13560,
+          "severity": "warning",
+          "detail": "Repeated wording is retained; inspect for memes or duplicate families"
+        }
+      ]
+    },
+    {
+      "dataset": "announcements",
+      "rows": 3445,
+      "valid": true,
+      "issues": [
+        {
+          "check": "empty_text",
+          "count": 2,
+          "severity": "warning",
+          "detail": "Source coverage needs inspection"
+        }
+      ]
+    }
+  ]
+}

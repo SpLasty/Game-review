@@ -1,0 +1,3 @@
+dataset,reviews,games,negative_votes,valid_votes,negative_share,minimum_words,below_minimum_words,edited_latest_snapshot,earliest_created_utc,latest_created_utc
+reviews,73336,30,13895,73336,0.18947038289516746,10,42548,3470,2026-01-14T23:28:05+00:00,2026-10-14T19:47:59+00:00
+balanced,30000,30,7517,30000,0.25056666666666666,10,0,2466,2026-01-23T16:56:45+00:00,2026-10-14T19:47:59+00:00

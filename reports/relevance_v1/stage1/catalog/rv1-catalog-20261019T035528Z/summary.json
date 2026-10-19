@@ -1,0 +1,34 @@
+{
+  "run_id": "rv1-catalog-20261019T035528Z",
+  "status": "complete",
+  "catalog_type": "games_only",
+  "page_count": 4,
+  "max_results_per_page": 50000,
+  "unique_game_records": 194280,
+  "distinct_appids": 194280,
+  "max_appid": 5453610,
+  "raw_page_count": 4,
+  "normalized_parquet": "/home/ict317/master's/ENSF 621/Project/Game-review/data/relevance_v1/normalized/rv1-catalog-20261019T035528Z/catalog_apps.parquet",
+  "pilot_game_matches": [
+    {
+      "appid": 730,
+      "configured_name": "Counter-Strike 2",
+      "steam_name": "Counter-Strike 2"
+    },
+    {
+      "appid": 570,
+      "configured_name": "Dota 2",
+      "steam_name": "Dota 2"
+    },
+    {
+      "appid": 553850,
+      "configured_name": "HELLDIVERS™ 2",
+      "steam_name": "HELLDIVERS™ 2"
+    },
+    {
+      "appid": 275850,
+      "configured_name": "No Man's Sky",
+      "steam_name": "No Man's Sky"
+    }
+  ]
+}

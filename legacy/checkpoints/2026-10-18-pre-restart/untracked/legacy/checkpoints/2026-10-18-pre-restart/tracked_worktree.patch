@@ -1,0 +1,380 @@
+diff --git a/docs/PROJECT_HANDOFF.md b/docs/PROJECT_HANDOFF.md
+index f756ff1..4281e14 100644
+--- a/docs/PROJECT_HANDOFF.md
++++ b/docs/PROJECT_HANDOFF.md
+@@ -1,6 +1,6 @@
+ # Project Handoff
+ 
+-Updated: 2026-10-17
++Updated: 2026-10-18
+ 
+ ## Purpose and scope
+ 
+@@ -14,7 +14,7 @@ The intended progression remains: Phase 1, reliable local data collection/proces
+ 
+ - `docs/data_pipeline.md` describes the end-to-end processing stages, publication/storage rationale, patch-window semantics, review-change matching, splits and model loading.
+ - `docs/data_dictionary.md` defines table/field contracts; `docs/data_pipeline_status.md` records earlier implementation and verification history.
+-- `docs/llm_annotation_workflow.md` documents file-based LLM labeling and import, including evidence rules and the new patch-scoped audit.
++- `docs/llm_annotation_workflow.md` documents file-based LLM labeling and import, including evidence rules and patch-scoped audits. `reports/data_quality/helldivers_710_full_list_review_audit.md` records a separate random full-list review audit.
+ - `reports/data_quality/data_quality_report.md` and `reports/data_quality/pipeline/report.md` are the generated source-quality and patch-window reports.
+ - `implement-stage/data-pipeline/` and `implement-stage/patch-pilot/` hold the specs, assumption ledgers and build notes for those implementation slices.
+ 
+@@ -23,14 +23,15 @@ The intended progression remains: Phase 1, reliable local data collection/proces
+ - The data workflow normalizes review revisions, parses announcement revisions and individual change blocks, screens patch windows, generates review/change candidates, stores immutable Parquet snapshots, and validates published tables. DuckDB is available for exploration.
+ - LLM labeling uses provider-neutral files, frozen candidate membership, exact quote validation, run/model/prompt provenance, and a separate `silver_pairs.parquet` export. No API credentials or human annotation are needed for the file-based workflow.
+ - Patch-scoped export now supports `--patch-id` and `--exclude-annotated`. It balances sampling over change/task/split groups, prioritizes the highest lexical scores within each group, and writes `retrieval_audit.csv` outside the model prompt.
+-- `scripts/data/report_patch_pilot.py` joins the returned LLM labels to the lexical audit and reports label coverage by task and lexical rank. It explicitly does not estimate missed-pair recall or patch causality.
++- The first Sea of Thieves 3.8.1 response pass was re-reviewed row by row against full review and announcement context. A distinct LLM run supersedes, rather than deletes, the first-pass decisions.
++- `scripts/data/report_patch_pilot.py` joins the returned LLM labels to the lexical audit and reports label coverage by task and lexical rank. It explicitly does not estimate missed-pair recall or patch causality. A separate random review audit gave the labeler the complete numbered patch list for every review and did not use lexical candidates.
+ 
+ ## Data snapshots and labels
+ 
+ | Stage | Snapshot | Result |
+ |---|---|---|
+ | Before the patch pilot | `5c8a356cb9aa33235617e46eb2b6597db40ed77ee1967ed71be2ec0b65f633c7` | 100 initial GPT-6 decisions; 99 silver rows (76 train, 23 validation); 6 relevant, 93 irrelevant, 1 uncertain. |
+-| Current | `5eb4842f3daaf8125a9daaaeef18c9e9f0c304dcd8703c5b100a5cfd39c77c9f` | 300 machine decisions; 297 silver rows; 0 human annotation rows; all 196 snapshot checks passed. Three machine decisions are uncertain/conflicted and excluded from silver rows. |
++| Current | `cfa34941257d2905d8a2f2681de931909e1904d97bc220e9d121f3c855b4cf56` | 500 stored machine annotation records, including 200 superseded first-pass records; 289 active silver rows; 0 human annotation rows; all 196 snapshot checks passed. The 300 active decisions are 6 relevant, 283 irrelevant, and 11 uncertain. |
+ 
+ The current corpus has 30 games, 30,194 review/change candidate pairs, 255 source-confirmed or reviewed patch posts, and 16 patch windows that pass the configured review-coverage screen. See `reports/data_quality/pipeline/report.md` and `reports/data_quality/data_quality_report.md` for current source-quality findings.
+ 
+@@ -38,9 +39,15 @@ The current corpus has 30 games, 30,194 review/change candidate pairs, 255 sourc
+ 
+ The selected patch is Release Notes 3.8.1, patch ID `9593c96b043f323204b6db3437497a9b4972e5986d637dd7e21ce7b908946839`. It has 156 eligible reviews before and 134 after the patch, with no overlapping patch post in the configured window. The lexical retriever produced 348 candidate pairs for this patch.
+ 
+-The pilot job is `data/annotations/llm_jobs/sot-381-pilot`, frozen against snapshot `5c8a356cb9aa33235617e46eb2b6597db40ed77ee1967ed71be2ec0b65f633c7`. It contains 200 new train examples (126 post-patch feedback, 74 retrospective complaint-resolution), excluding two previously labeled candidates. The response pass used model label `GPT-6`, run ID `codex-gpt6-sot381-pilot-2026-10-17`, and imported all 200 labels: 198 irrelevant, 2 uncertain, 0 relevant. The two uncertain examples share a symptom with a change but lack enough context to establish the specific issue. Together with the earlier two labels, 202 candidates in this patch have stored decisions: 200 irrelevant and 2 uncertain.
++The pilot job is `data/annotations/llm_jobs/sot-381-pilot`, frozen against snapshot `5c8a356cb9aa33235617e46eb2b6597db40ed77ee1967ed71be2ec0b65f633c7`. It contains 200 new train examples (126 post-patch feedback, 74 retrospective complaint-resolution), excluding two previously labeled candidates. The first GPT-6 run (`codex-gpt6-sot381-pilot-2026-10-17`) labeled all 200 as 198 irrelevant and 2 uncertain, but used largely shared rationales. A second GPT-6 run (`codex-gpt6-sot381-row-audit-2026-10-18`) re-read every full review and its exact announcement passage, then superseded all 200 earlier decisions: 190 are irrelevant and 10 uncertain, with no relevant pairs. The rowwise results are 118 irrelevant/8 uncertain for post-patch feedback and 72 irrelevant/2 uncertain for retrospective complaint-resolution. Including the two earlier candidates, 202 patch candidates now have active decisions: 192 irrelevant and 10 uncertain.
+ 
+-The sample was stratified across change/task groups and prioritized by lexical score. **The zero-relevant result is provisional:** most irrelevant responses were produced with a shared rationale, and every pair was not individually checked against its full announcement context. The current label rate must not be treated as retrieval precision or used to tune a threshold until the 200 pairs receive that per-example review. The audit's most common shared terms are generic game vocabulary (`players` 40, `ship` 34, `seas` 19, `player` 18), which is a useful clue about the overlap scorer but does not verify each label. The tokenizer removes common English stopwords but the scorer has no inverse-document-frequency weighting or phrase-level match. The sample does not measure missed-pair recall. The audit report is `data/annotations/llm_jobs/sot-381-pilot/retrieval_audit_report.md`; the full lexical pool and ranks are in `retrieval_audit.csv`. Prompt files, responses, and Parquet data are local artifacts and are ignored by Git; back them up with the data storage policy.
++The sample is stratified across change/task groups and prioritized by lexical score. The zero-relevant result is now a rowwise contextual re-review, but remains a single-model silver judgment rather than independent or human adjudication. The 10 uncertain rows were retained where only a section heading was extracted or a symptom matched while its trigger did not. A follow-up comparison of the rationales against frozen pair inputs found two uncertain rationales describing review text that is absent from their stored pairs (`0580a1eb…` and `caad4bdf…`); both pairs appear irrelevant and need a corrected annotation run before the 190/10 counts are treated as final. The common shared terms (`players` 40, `ship` 34, `seas` 19, `player` 18) show why raw word overlap is weak for this patch. This sample does not estimate corpus precision or missed-pair recall and cannot establish patch causality. See the tracked summary `reports/data_quality/patch_pilot_rowwise_audit.md`, the generated `data/annotations/llm_jobs/sot-381-pilot/retrieval_audit_report.md`, and the full 348-row lexical pool in `retrieval_audit.csv`. The new rowwise responses and all Parquet data are local artifacts ignored by Git; back them up with the data storage policy. The first-pass report and decisions are retained under `rowwise-audit/` for traceability.
++
++## HELLDIVERS 2 7.1.0 full-list review audit
++
++A separate, reproducible random sample of 300 post-patch reviews was assessed against the complete 101-fragment change list for “Devoid of Liberty: 7.1.0”. The sample was drawn without replacement from 708 eligible review records in snapshot `cfa34941257d2905d8a2f2681de931909e1904d97bc220e9d121f3c855b4cf56`, using seed `steam-full-list-20261018-v1`. The labeler recorded 3 confirmed review/change mentions, 30 uncertain topical overlaps, and 267 reviews with no specific item identified. Confirmed mentions were two reviews about enemy spawn placement (change 12) and one review directly quoting the GL-52 De-Escalator self-damage change (change 47). A join to `candidates.parquet` found 2 of these 3 exact pairs. The omitted change-12 pair cleared the two-term minimum but scored 0.067, below five selected alternatives; `max_per_review_per_task = 5` explains this concrete cap miss, not a corpus recall estimate.
++
++This is a full-list audit independent of the lexical candidate pool. It is a single GPT-6 assistant labeling pass, not human or independent-model adjudication. No external API, provider-side prompt cache, or cost measurement was used; the shared prefix is saved in a cache-ready form. The collection is incomplete, one other patch post overlaps the analysis period, and 65 of the 101 extracted fragments are flagged for review. These results do not measure label accuracy, recall, sentiment toward changes, or patch causality. The tracked report lists every uncertain review/change candidate. Full inputs and machine-readable outputs live in Git-ignored `data/annotations/llm_jobs/helldivers-710-full-list/`; `prompts.jsonl` materializes all 300 complete prompts, each with the full numbered list and one review.
+ 
+ ## Commands and result locations
+ 
+@@ -53,10 +60,23 @@ uv run --all-extras steam-insights prepare-data
+ # Check the latest published snapshot
+ uv run --all-extras steam-insights pipeline-validate
+ 
+-# Recreate the patch audit report from saved LLM responses
++# Recreate the current report after the rowwise context review
+ python scripts/data/report_patch_pilot.py \
+   --job data/annotations/llm_jobs/sot-381-pilot \
+-  --responses data/annotations/llm_jobs/sot-381-pilot/responses
++  --responses data/annotations/llm_jobs/sot-381-pilot/rowwise-audit/responses-0001.jsonl \
++  --rowwise-context-audited --audit-model GPT-6 \
++  --audit-run-id codex-gpt6-sot381-row-audit-2026-10-18
++```
++
++The response artifact can be imported and the corrected dataset rebuilt with:
++
++```bash
++uv run --all-extras steam-insights llm-annotations-import \
++  --job data/annotations/llm_jobs/sot-381-pilot \
++  --input data/annotations/llm_jobs/sot-381-pilot/rowwise-audit/responses-0001.jsonl \
++  --model GPT-6 --run-id codex-gpt6-sot381-row-audit-2026-10-18
++uv run --all-extras steam-insights prepare-data
++uv run --all-extras steam-insights pipeline-validate
+ ```
+ 
+ To export more examples for the same patch, rebuild first so the current machine labels are represented, then use a new output directory:
+@@ -68,7 +88,7 @@ uv run --all-extras steam-insights llm-annotations-export \
+   --output data/annotations/llm_jobs/sot-381-followup
+ ```
+ 
+-Before any follow-up export, individually audit the existing 200 responses against each full review and announcement context, correct any labels with a new run ID, and regenerate the report. Do not use the preliminary zero-relevant result to tune retrieval. See `docs/llm_annotation_workflow.md` for export, response, import, and model-loading steps.
++The 200-pair context audit is complete. Before treating relevance rates as system performance, sample pairs outside the lexical candidate set and improve retrieval. Do not use this candidate-only sample as a recall estimate. See `docs/llm_annotation_workflow.md` for export, response, import, superseding, and model-loading steps.
+ 
+ ## Decisions and limits
+ 
+@@ -78,19 +98,23 @@ Before any follow-up export, individually audit the existing 200 responses again
+ - The earlier broad 100-example pass has only six relevant examples across the corpus. The patch pilot adds no relevant example. There is not yet enough positive coverage to train a reliable relevance classifier, and there is no basis to train change sentiment or fix-status models.
+ - LLM agreement/evaluation measures consistency with the labeling process, not independently verified human accuracy. Keep model and prompt versions fixed for comparisons.
+ - Review/patch-window comparisons are observational. They do not show that a patch caused a sentiment change.
+-- The pilot audit covers only pairs emitted by the lexical retriever. A semantic retriever and a separately labeled sample of currently missed/noncandidate pairs are needed to audit recall.
++- The rowwise context audit covers only pairs emitted by the lexical retriever. A semantic retriever and a separately labeled sample of currently missed/noncandidate pairs are needed to audit recall.
+ 
+ ## Next work
+ 
+-1. Audit the 200 pilot decisions individually against full review and announcement context, recording a candidate-specific rationale and correcting any labels in a distinct run. Then inspect false positives and retrieval terms for Sea of Thieves 3.8.1.
+-2. Improve retrieval: compare domain-specific stop terms and IDF-weighted overlap against phrase-level matching; inspect change-block context and the per-review candidate cap. Version the new candidate-generation contract so existing candidate IDs and pilot labels remain auditable.
+-3. Add a second retrieval rung with a small, maintained sentence-embedding model and rerank lexical plus semantic candidates. Add a controlled LLM-labeled sample of pairs the lexical system did not emit, so retrieval changes can be assessed for newly surfaced matches. Keep the limits of LLM-only evaluation explicit.
+-4. Run the revised retriever on multiple coverage-screened patches, label a fresh stratified batch, and measure relevance by task, patch, rank, and label coverage before setting a production threshold.
+-5. Only after positive labels cover games, changes, and sentiment classes, establish a simple relevance baseline and then consider sentiment/fix-status models. Keep game-held-out validation and a frozen test set.
+-6. Build a patch report with exact evidence, coverage warnings, and descriptive before/after review summaries.
+-7. Stabilize source, candidate, label, and prediction contracts before adding live Steam lookup/cache/rate controls, scheduled collection, DVC/MLflow lineage, GitHub Actions checks, model release/deployment, and monitoring.
++1. Inspect the 10 uncertain rows and targeted false positives to decide whether announcement parsing should emit finer-grained changes instead of section headings.
++2. Improve retrieval: compare domain-specific stop terms and IDF-weighted overlap against phrase-level matching; inspect change-block context and the per-review candidate cap. Version the candidate-generation contract so existing candidate IDs and pilot labels remain auditable.
++3. Label a controlled sample of pairs outside the lexical candidate set. Combine that with surfaced-pair review to assess both false matches and missed matches; keep the limits of LLM-only evaluation explicit.
++4. Inspect the 30 uncertain reviews from the HELLDIVERS 2 full-list audit and repeat a separately sampled full-list audit on another coverage-screened patch; fix broad/heading-only extraction before change-level sentiment analysis.
++5. Add a second retrieval rung with a small, maintained sentence-embedding model and rerank lexical plus semantic candidates. Evaluate it on multiple coverage-screened patches before setting a production threshold.
++6. Only after positive labels cover games, changes, and sentiment classes, establish a simple relevance baseline and then consider sentiment/fix-status models. Keep game-held-out validation and a frozen test set.
++7. Build a patch report with exact evidence, coverage warnings, and descriptive before/after review summaries.
++8. Stabilize source, candidate, label, and prediction contracts before adding live Steam lookup/cache/rate controls, scheduled collection, DVC/MLflow lineage, GitHub Actions checks, model release/deployment, and monitoring.
+ 
+ ## Handoff update log
+ 
+ - 2026-10-17: Recorded the initial 100-example GPT-6 pass and 99 silver rows.
+-- 2026-10-17: Added patch-scoped balanced export, the lexical retrieval sidecar and report, then imported 200 Sea of Thieves 3.8.1 LLM decisions. Rebuilt snapshot `5eb4842f3daaf8125a9daaaeef18c9e9f0c304dcd8703c5b100a5cfd39c77c9f`; all 196 publication checks passed. Later review found the 198 irrelevant responses used shared rationale and were not individually checked against full announcement context. Treat the 0-relevant result as provisional and individually audit the pilot before retrieval tuning.
++- 2026-10-17: Added patch-scoped balanced export and imported the first 200 Sea of Thieves 3.8.1 decisions. The first run is retained but its decisions are superseded below.
++- 2026-10-18: Re-read all 200 full review/change pairs, recorded candidate-specific rationales, and superseded all first-pass decisions in a distinct GPT-6 run. The revised sample contains 190 irrelevant and 10 uncertain pairs; it has no relevant pair and does not measure recall. Rebuilt snapshot `cfa34941257d2905d8a2f2681de931909e1904d97bc220e9d121f3c855b4cf56`; all 196 publication checks passed. Corrected report: `reports/data_quality/patch_pilot_rowwise_audit.md`.
++- 2026-10-18: Compared the uncertain-row rationales to the frozen pair inputs. Two rationales describe review complaints that are absent from their stored pairs; those pairs appear irrelevant and need superseding annotations plus a dataset rebuild. See the follow-up consistency note in `reports/data_quality/patch_pilot_rowwise_audit.md`.
++- 2026-10-18: Completed a random full-list audit of 300 HELLDIVERS 2 7.1.0 post-patch reviews against all 101 extracted changes. Results: 3 confirmed, 30 uncertain, 267 with no specific match; validation confirmed all review IDs join and all evidence quotes are exact. See `reports/data_quality/helldivers_710_full_list_review_audit.md`; row-level outputs are in the Git-ignored `data/annotations/llm_jobs/helldivers-710-full-list/`. This separate audit was not imported into the training snapshot.
+diff --git a/docs/llm_annotation_workflow.md b/docs/llm_annotation_workflow.md
+index 3a5a5fa..268fbb9 100644
+--- a/docs/llm_annotation_workflow.md
++++ b/docs/llm_annotation_workflow.md
+@@ -66,6 +66,18 @@ python scripts/data/report_patch_pilot.py \
+ 
+ The generated `retrieval_audit_report.md` summarizes response coverage and relevance by task and lexical rank. It does not claim recall or patch causality.
+ 
++After a full rowwise contextual re-review, pass that review's response file and provenance to the report command. Set `--rowwise-context-audited` only when every response was checked against the complete review and its announcement context:
++
++```bash
++python scripts/data/report_patch_pilot.py \
++  --job data/annotations/llm_jobs/sot-381-pilot \
++  --responses data/annotations/llm_jobs/sot-381-pilot/rowwise-audit/responses-0001.jsonl \
++  --rowwise-context-audited --audit-model GPT-6 \
++  --audit-run-id codex-gpt6-sot381-row-audit-2026-10-18
++```
++
++The rowwise flag documents that review occurred; it does not make an LLM pass independent or human-adjudicated. The report must keep those labels identified as silver.
++
+ Each example includes its task direction, review, selected passage, specific change, title, headings and full canonical announcement. Recommendation votes and rule-generated labels are omitted. The default limits are ten examples and 100,000 source JSON characters per batch. These are file-transport heuristics, not token limits. An oversized individual example is flagged and preserved intact rather than losing evidence through truncation.
+ 
+ ## 2. Give the Markdown files to an LLM
+@@ -81,6 +93,7 @@ The model supplies:
+ - `review_evidence` and `change_evidence`: exact source quotes in objects such as `{"text":"exact quote"}`; null where appropriate.
+ - `rationale`: a short explanation.
+ - `confidence`: self-reported 0–1 confidence, retained for inspection rather than treated as a calibrated probability or automatic quality guarantee.
++- `supersedes` (optional): older annotation IDs for this same candidate when this response intentionally corrects a prior decision.
+ 
+ Relevance is decided for the review/change pair, in its task direction. For `post_patch_feedback`, the review must discuss the specific preceding change. For `retrospective_complaint_resolution`, the earlier review must describe the specific problem the later change addresses. A shared game term or broad opinion about bugs, PvP, ships, or the game does not establish relevance. Use `uncertain` when the review and change share a symptom but the source context does not identify the same issue. A `relevant` decision needs an exact quote from both the review and the full announcement. The exported input includes the change, title, headings, and full canonical announcement so the labeler can use surrounding context.
+ 
+@@ -104,7 +117,7 @@ Import checks the frozen snapshot and job membership, allowed labels, exact evid
+ 
+ These checks validate data integrity and provenance; they do not independently verify the semantic relevance judgment. LLM labels remain silver and should be sampled or individually audited against the full source context before using them to claim retrieval precision or tune a threshold.
+ 
+-An optional second model/pass can label the same job without seeing the first model's responses. If active machine decisions disagree, the candidate is preserved for inspection but excluded from silver training data. Agreement is a consistency check, not proof of correctness; one valid pass can produce silver data. A later machine decision may use an explicit `supersedes` list of older same-candidate annotation IDs to resolve previous decisions. No human adjudication is required.
++An optional second model/pass can label the same job without seeing the first model's responses. If active machine decisions disagree, the candidate is preserved for inspection but excluded from silver training data. Agreement is a consistency check, not proof of correctness; one valid pass can produce silver data. A deliberate correction pass can use a distinct run ID and an explicit `supersedes` list of older same-candidate annotation IDs to resolve previous decisions while preserving the full history. No human adjudication is required.
+ 
+ ## 4. Rebuild and load machine supervision
+ 
+diff --git a/implement-stage/patch-pilot/ASSUMPTIONS.md b/implement-stage/patch-pilot/ASSUMPTIONS.md
+index 29b084f..5f7f5e6 100644
+--- a/implement-stage/patch-pilot/ASSUMPTIONS.md
++++ b/implement-stage/patch-pilot/ASSUMPTIONS.md
+@@ -15,4 +15,4 @@
+ 
+ ## Observed result
+ 
+-The 200 sampled pairs have stored labels of 198 irrelevant and 2 uncertain, with no relevant labels. Most irrelevant responses used a shared rationale and were not individually checked against the full announcement context. Treat this as an unverified first pass, not as a reliable estimate of candidate quality or retrieval recall. Audit each pair before tuning the retriever; then assess a noncandidate sample to examine missed matches.
++The initial 200 decisions (198 irrelevant, 2 uncertain) were re-read pair by pair against the complete review and announcement context. A distinct GPT-6 run superseded all 200 decisions with 190 irrelevant and 10 uncertain; no pair in the sample was judged relevant. Uncertainty was retained for heading-only extraction and overlapping symptoms with different or missing triggers. This is still LLM-only silver labeling, not human or independent adjudication. The stratified lexical sample does not estimate precision or recall; a separately sampled set of noncandidate pairs is still required to examine missed matches.
+diff --git a/implement-stage/patch-pilot/BUILD_NOTE.md b/implement-stage/patch-pilot/BUILD_NOTE.md
+index 204f5c5..ce50daf 100644
+--- a/implement-stage/patch-pilot/BUILD_NOTE.md
++++ b/implement-stage/patch-pilot/BUILD_NOTE.md
+@@ -5,15 +5,17 @@
+ | F0 | Add patch-filtered, change-balanced LLM job export with an auditable lexical sidecar | `uv run --all-extras steam-insights llm-annotations-export --patch-id 9593c96b043f323204b6db3437497a9b4972e5986d637dd7e21ce7b908946839 --sample-size 200 --split train --exclude-annotated --output data/annotations/llm_jobs/sot-381-pilot` | MUST | ✅ |
+ | F1 | Label/import the frozen pilot and publish refreshed silver data | `uv run --all-extras steam-insights prepare-data` | MUST | ✅ |
+ | F2 | Summarize labeled lexical-rank sample and update the handoff | `python scripts/data/report_patch_pilot.py --job data/annotations/llm_jobs/sot-381-pilot --responses data/annotations/llm_jobs/sot-381-pilot/responses` | MUST | ✅ |
+-| F3 | Add embedding retrieval, noncandidate recall audit, and baseline model | Deferred: requires a separate model/dependency decision and broader labels | DEFERRED | ⬜ |
++| F3 | Re-review all 200 pairs against full review and announcement context; supersede first-pass decisions | `uv run --all-extras steam-insights llm-annotations-import --job data/annotations/llm_jobs/sot-381-pilot --input data/annotations/llm_jobs/sot-381-pilot/rowwise-audit/responses-0001.jsonl --model GPT-6 --run-id codex-gpt6-sot381-row-audit-2026-10-18` | MUST | ✅ |
++| F4 | Add embedding retrieval, noncandidate recall audit, and baseline model | Deferred: requires a separate model/dependency decision and broader labels | DEFERRED | ⬜ |
+ 
+ ## Run record
+ 
+ - Frozen input snapshot: `5c8a356cb9aa33235617e46eb2b6597db40ed77ee1967ed71be2ec0b65f633c7`.
+ - Pilot job ID: `e5be0734ba84a936f015314014b153510ef9297056e592205a6ee09ccd2e733c`; 200 fresh train examples from a 348-pair lexical pool, with two earlier labeled IDs excluded.
+-- LLM run: model label `GPT-6`, run ID `codex-gpt6-sot381-pilot-2026-10-17`; imported all 200 responses (198 irrelevant, 2 uncertain, 0 relevant). The 198 irrelevant responses shared a generic rationale and were not individually checked against all full announcement context; the zero-relevant result is provisional until those pairs are audited individually.
+-- Refreshed snapshot: `5eb4842f3daaf8125a9daaaeef18c9e9f0c304dcd8703c5b100a5cfd39c77c9f`; 300 machine decisions, 297 silver rows, 0 human rows; all 196 publication checks passed.
+-- Descriptive pilot report: `data/annotations/llm_jobs/sot-381-pilot/retrieval_audit_report.md`. It records no relevant examples among lexical ranks 1–2, but the label result needs per-example semantic audit before it can guide retrieval tuning. It does not measure recall or unbiased corpus precision.
++- First-pass LLM run: model label `GPT-6`, run ID `codex-gpt6-sot381-pilot-2026-10-17`; imported all 200 responses (198 irrelevant, 2 uncertain, 0 relevant). Those decisions are preserved as superseded history.
++- Rowwise correction run: model label `GPT-6`, run ID `codex-gpt6-sot381-row-audit-2026-10-18`; re-read each complete review and announcement context, superseding all 200 previous decisions. Outcomes: 190 irrelevant, 10 uncertain, 0 relevant (post-patch: 118/8/0; retrospective: 72/2/0). The same LLM workflow was used, so these remain silver and are not independent or human adjudications.
++- Refreshed snapshot: `cfa34941257d2905d8a2f2681de931909e1904d97bc220e9d121f3c855b4cf56`; 500 stored annotation records including 200 superseded, 300 active decisions, 289 silver rows, 0 human rows, and 11 active uncertain decisions; all 196 publication checks passed.
++- Corrected report: `data/annotations/llm_jobs/sot-381-pilot/retrieval_audit_report.md`; tracked summary: `reports/data_quality/patch_pilot_rowwise_audit.md`. It describes the stratified lexical sample and does not estimate missed-pair recall or unbiased corpus precision.
+ - Verification: `python -m unittest discover -s tests -p 'test_pipeline_*.py'` passed 26 tests; Ruff lint and format checks passed for changed Python files.
+ - Independent assumption sweep is unavailable in this turn because delegation is disabled. See `SILENT_ASSUMPTION_SWEEP.json`; deterministic tests and artifact checks were run instead.
+ 
+@@ -23,4 +25,4 @@
+ 
+ ## Blockers
+ 
+-- The first-pass labels are not yet a reliable retrieval-quality estimate: most irrelevant decisions used shared rationale without a row-by-row full-context audit. Recheck the 200 responses individually, then inspect retrieval and label some pairs outside the lexical candidate set before expanding labels or training a classifier.
++- The rowwise pass found no relevant pairs in this sample and retained 10 uncertain rows. Improve lexical candidate generation and label a separately sampled set of noncandidate pairs before estimating retrieval quality or training a relevance classifier.
+diff --git a/implement-stage/patch-pilot/SPEC.md b/implement-stage/patch-pilot/SPEC.md
+index 7c6efcf..8210e6a 100644
+--- a/implement-stage/patch-pilot/SPEC.md
++++ b/implement-stage/patch-pilot/SPEC.md
+@@ -6,4 +6,6 @@ Success: the patch filter emits only the requested patch's candidates, excludes
+ 
+ ## Outcome
+ 
+-The exporter created a 200-example train job from a 348-pair lexical pool and excluded two previously labeled IDs. All request IDs were patch-scoped. The GPT-6 pass returned 200/200 labels: 198 irrelevant, 2 uncertain, 0 relevant. Most irrelevant responses used a shared rationale and were not individually checked against all full announcement context, so the zero-relevant result is provisional pending row-by-row audit. Import and rebuild produced snapshot `5eb4842f3daaf8125a9daaaeef18c9e9f0c304dcd8703c5b100a5cfd39c77c9f` with 300 machine decisions, 297 silver rows, no human rows, and 196 passing validation checks. This says nothing about candidate recall.
++The exporter created a 200-example train job from a 348-pair lexical pool and excluded two previously labeled IDs. All request IDs were patch-scoped. The first GPT-6 pass returned 198 irrelevant and 2 uncertain labels; these are preserved but superseded because most used a shared rationale and did not verify each complete context.
++
++A rowwise GPT-6 correction pass (`codex-gpt6-sot381-row-audit-2026-10-18`) checked all 200 full reviews against their exact announcement passages and superseded every first-pass decision. It returned 190 irrelevant, 10 uncertain, and 0 relevant labels. The refreshed snapshot is `cfa34941257d2905d8a2f2681de931909e1904d97bc220e9d121f3c855b4cf56`: 500 stored annotations including 200 superseded records, 300 active decisions, 289 silver rows, no human annotations, and 196 passing validation checks. The rowwise review remains machine-generated silver labeling, not independent or human adjudication. This does not measure candidate recall or unbiased corpus precision.
+diff --git a/reports/data_quality/data_quality_report.md b/reports/data_quality/data_quality_report.md
+index 7322d6a..29c9f87 100644
+--- a/reports/data_quality/data_quality_report.md
++++ b/reports/data_quality/data_quality_report.md
+@@ -1,6 +1,6 @@
+ # Steam data quality and patch-window report
+ 
+-Generated: `2026-10-17T04:20:56+00:00`
++Generated: `2026-10-18T07:15:55+00:00`
+ 
+ ## Scope and overall assessment
+ 
+diff --git a/reports/data_quality/pipeline/readiness.json b/reports/data_quality/pipeline/readiness.json
+index 134b87a..80afa7f 100644
+--- a/reports/data_quality/pipeline/readiness.json
++++ b/reports/data_quality/pipeline/readiness.json
+@@ -1,14 +1,14 @@
+ {
+-  "dataset_id": "1abc6ca38f312ec238a9bac872510819f32d4feadf8cb8547a6399f789909d38",
++  "dataset_id": "cfa34941257d2905d8a2f2681de931909e1904d97bc220e9d121f3c855b4cf56",
+   "human_annotations": 0,
+   "unresolved_or_uncertain_candidates": 0,
+   "labeled_pairs": 0,
+   "labeled_pairs_excluded_for_duplicate_leakage": 0,
+   "supervised_training_ready": false,
+-  "llm_annotations": 0,
+-  "silver_pairs": 0,
+-  "silver_training_inputs_available": false,
+-  "machine_label_conflicts_or_uncertainty": 0,
++  "llm_annotations": 500,
++  "silver_pairs": 289,
++  "silver_training_inputs_available": true,
++  "machine_label_conflicts_or_uncertainty": 11,
+   "allocation": {
+     "test": 20,
+     "validation": 2,
+diff --git a/reports/data_quality/pipeline/report.md b/reports/data_quality/pipeline/report.md
+index 9448da9..f75bedb 100644
+--- a/reports/data_quality/pipeline/report.md
++++ b/reports/data_quality/pipeline/report.md
+@@ -1,6 +1,6 @@
+ # Model-ingestion data readiness report
+ 
+-Dataset: `1abc6ca38f312ec238a9bac872510819f32d4feadf8cb8547a6399f789909d38`
++Dataset: `cfa34941257d2905d8a2f2681de931909e1904d97bc220e9d121f3c855b4cf56`
+ 
+ ## Processing completed
+ 
+@@ -29,8 +29,8 @@ Dataset: `1abc6ca38f312ec238a9bac872510819f32d4feadf8cb8547a6399f789909d38`
+ | model_change_inputs | 32,759 |
+ | model_pair_inputs | 30,194 |
+ | labeled_pairs | 0 |
+-| llm_annotations | 0 |
+-| silver_pairs | 0 |
++| llm_annotations | 500 |
++| silver_pairs | 289 |
+ 
+ ## Patch verification and window coverage
+ 
+@@ -83,7 +83,7 @@ The screen uses configured before/after intervals (default 14 days each), at lea
+ 
+ - Inference inputs available: **True**.
+ - Human-adjudicated labeled pairs: **0**; human-labeled training inputs available: **False**. This flag indicates that some training rows exist, not that label volume, class coverage, or evaluation quality is sufficient.
+-- LLM annotations: **0**; silver pairs: **0**; machine-supervised training inputs available: **False**. Human annotation is optional. Silver labels are machine supervision; evaluation against them measures teacher agreement, not independently verified accuracy.
++- LLM annotations: **500**; silver pairs: **289**; machine-supervised training inputs available: **True**. Human annotation is optional. Silver labels are machine supervision; evaluation against them measures teacher agreement, not independently verified accuracy.
+ - Cross-split duplicate families: **1,152**; affected pairs are excluded from supervised export.
+ - Source metadata/independent language-detector disagreements: **503**; retained as inspection flags.
+ 
+diff --git a/scripts/data/report_patch_pilot.py b/scripts/data/report_patch_pilot.py
+index a820358..de803ca 100644
+--- a/scripts/data/report_patch_pilot.py
++++ b/scripts/data/report_patch_pilot.py
+@@ -43,7 +43,14 @@ def _rank_band(rank):
+     return str(value) if value <= 2 else "3+"
+ 
+ 
+-def build_report(job, responses):
++def build_report(
++    job,
++    responses,
++    *,
++    rowwise_context_audited=False,
++    audit_model=None,
++    audit_run_id=None,
++):
+     manifest = json.loads((job / "manifest.json").read_text(encoding="utf-8"))
+     audit_path = job / "retrieval_audit.csv"
+     with audit_path.open(encoding="utf-8", newline="") as handle:
+@@ -55,6 +62,7 @@ def build_report(job, responses):
+     outside = sorted(set(labels) - selected_ids)
+     joined = [(row, labels[row["candidate_id"]]) for row in sample if row["candidate_id"] in labels]
+     relevance = Counter(label.get("relevance", "missing") for _, label in joined)
++    superseded = sum(bool(label.get("supersedes")) for _, label in joined)
+     by_task = defaultdict(Counter)
+     by_rank = defaultdict(Counter)
+     shared_terms = Counter(
+@@ -90,6 +98,7 @@ def build_report(job, responses):
+         f"- Responses received for sample: {len(joined)}",
+         f"- Responses missing: {len(sample) - len(joined)}",
+         f"- Responses outside this sampled job: {len(outside)}",
++        f"- Previous decisions superseded: {superseded}",
+         "",
+         "## Relevance labels",
+         "",
+@@ -117,11 +126,25 @@ def build_report(job, responses):
+                 "",
+             ]
+         )
++    lines.extend(["## Interpretation", ""])
++    if rowwise_context_audited:
++        provenance = ""
++        if audit_model or audit_run_id:
++            provenance = f" The rowwise pass used {audit_model or 'an unspecified model'}"
++            if audit_run_id:
++                provenance += f" (run `{audit_run_id}`)"
++            provenance += "."
++        lines.append(
++            "Every sampled pair was re-examined against the complete review and its announcement passage, title, and heading context in a distinct rowwise pass. The response file supersedes the earlier pilot decision for each of the 200 candidates. This is a correction pass by the same LLM labeling workflow, not an independent model evaluation or human adjudication; labels remain machine-generated silver supervision."
++            + provenance
++        )
++    else:
++        lines.append(
++            "These labels are machine-generated silver decisions. The importer validates IDs, label structure, provenance and exact evidence, but cannot verify semantic relevance. Review every pair individually against its full announcement context before using label rates to tune retrieval."
++        )
+     lines.extend(
+         [
+-            "## Interpretation",
+-            "",
+-            "These labels are a single-model silver pass and have not been independently verified. The importer validates IDs, label structure, provenance and exact evidence, but cannot verify semantic relevance. Review every pair individually against its full announcement context before using label rates to tune retrieval. This is a descriptive audit of the stratified, lexical-retriever sample; it is not a probability estimate of precision, does not measure missed-pair recall, and does not establish patch causality. Unlabeled sampled rows are excluded from relevance counts.",
++            "The counts describe only this stratified sample drawn from pairs emitted by the lexical retriever. They are not a probability estimate of retrieval precision, do not measure missed-pair recall, and do not establish patch causality. Unlabeled sampled rows are excluded from relevance counts.",
+             "",
+         ]
+     )
+@@ -139,10 +162,26 @@ def main(argv=None):
+     parser.add_argument("--job", type=Path, required=True, help="Patch-scoped LLM job directory")
+     parser.add_argument("--responses", type=Path, required=True, help="Response file or directory")
+     parser.add_argument("--output", type=Path, help="Markdown destination; defaults inside the job")
++    parser.add_argument(
++        "--rowwise-context-audited",
++        action="store_true",
++        help="State that every response was re-reviewed against full source context",
++    )
++    parser.add_argument("--audit-model", help="Model label for the rowwise review pass")
++    parser.add_argument("--audit-run-id", help="Run ID for the rowwise review pass")
+     args = parser.parse_args(argv)
+     output = args.output or args.job / "retrieval_audit_report.md"
+     output.parent.mkdir(parents=True, exist_ok=True)
+-    output.write_text(build_report(args.job, args.responses), encoding="utf-8")
++    output.write_text(
++        build_report(
++            args.job,
++            args.responses,
++            rowwise_context_audited=args.rowwise_context_audited,
++            audit_model=args.audit_model,
++            audit_run_id=args.audit_run_id,
++        ),
++        encoding="utf-8",
++    )
+     print(output)
+     return 0
+ 

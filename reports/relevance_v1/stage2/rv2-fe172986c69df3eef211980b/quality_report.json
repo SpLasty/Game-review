@@ -1,0 +1,110 @@
+{
+  "dataset_id": "rv2-fe172986c69df3eef211980b",
+  "source_stage1_run_id": "rv1-20261019T031033900187Z-a468b544",
+  "complete_review_population": false,
+  "review_limit": 50,
+  "counts": {
+    "announcements": 1331,
+    "patch_changes": 3136,
+    "game_terminology": 1516,
+    "patch_episodes": 316,
+    "review_window_memberships": 133842,
+    "patch_review_windows": 60,
+    "patch_episode_overlaps": 1161,
+    "change_temporal_ambiguities": 2739,
+    "qa_sample": 38,
+    "review_claims": 74,
+    "nonempty_reviews_processed": 50,
+    "nonempty_reviews_without_claim_rows": 5
+  },
+  "announcement_category_counts": {
+    "promotional_or_non_patch_announcement": 89,
+    "performance_or_stability_change": 240,
+    "minor_cosmetic_or_localization_update": 63,
+    "other_announcement_unclassified": 624,
+    "major_gameplay_or_balance_update": 210,
+    "specific_bug_fix": 350,
+    "new_feature_or_content": 266,
+    "developer_acknowledgement_or_future_plan": 117
+  },
+  "announcement_counts_by_game": {
+    "570": 140,
+    "730": 260,
+    "275850": 120,
+    "553850": 811
+  },
+  "change_quality": {
+    "rows_with_any_quality_flag": 1968,
+    "flagged_rate": 0.6275510204081632,
+    "source_span_failures": 0,
+    "source_span_failure_rate": 0.0,
+    "flag_counts": {
+      "entity_unresolved": 1092,
+      "aspect_unresolved": 1382
+    },
+    "no_change_rows_generated_for_headings": true
+  },
+  "claim_quality": {
+    "low_confidence_rows_below_0_5": 48,
+    "entity_unresolved_rows": 45,
+    "aspect_unresolved_rows": 71,
+    "polarity_unknown_rows": 66,
+    "nonempty_reviews_without_claim_rows": 5,
+    "review_rows_without_claim_sample_ids": [
+      "rv1_review_revision_be44608e9a36074376c27967",
+      "rv1_review_revision_f43607c9dbe103adc2121c9d",
+      "rv1_review_revision_fb0527042a845dbe680cb9bc",
+      "rv1_review_revision_94013f53bc178d18928c436d",
+      "rv1_review_revision_45637a007bc1c2de0b964252"
+    ],
+    "language_claim_counts": {
+      "730:brazilian": 6,
+      "730:bulgarian": 1,
+      "730:czech": 1,
+      "730:english": 35,
+      "730:french": 3,
+      "730:polish": 1,
+      "730:romanian": 1,
+      "730:russian": 20,
+      "730:spanish": 3,
+      "730:swedish": 1,
+      "730:turkish": 2
+    }
+  },
+  "terminology": {
+    "resource_count": 1516,
+    "game_counts": {
+      "570": 500,
+      "730": 500,
+      "553850": 500,
+      "275850": 16
+    },
+    "cross_game_global_ontology": false
+  },
+  "temporal": {
+    "window_membership_rows": 133842,
+    "patch_episode_overlaps": 1161,
+    "same_entity_change_ambiguities": 2739,
+    "membership_semantics": "time-window membership only; not patch relevance",
+    "review_claims_assigned_to_patches": 0
+  },
+  "source_gaps": {
+    "announcements_with_external_or_unverified_note_links": 681,
+    "external_link_fetching": "not performed in Stage 2; only Stage 1 captured URLs",
+    "release_times": "publication time is used as an explicitly unverified window anchor where no release time exists",
+    "manual_translation": "not performed; original review language is preserved"
+  },
+  "qa_sample": {
+    "sample_seed": "stage2-audit-sample-2026-10",
+    "sample_per_stratum": 2,
+    "rows": 38,
+    "manual_review_status": "sample generated; inspection recorded in quality report after review",
+    "change_strata": 32,
+    "claim_strata": 6
+  },
+  "disallowed_outputs": [
+    "patch-review candidate pairs",
+    "relevance labels",
+    "training labels"
+  ]
+}

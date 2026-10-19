@@ -27,6 +27,8 @@ __pycache__/
 data/raw/steam_30_games/*/
 data/*/.collector.lock
 data/**/.collector.lock
+legacy/research/data/
+data/relevance_v1/
 
 # Optional tools not needed for the main collection workflow.
 /scripts/build_pipeline_document.py
